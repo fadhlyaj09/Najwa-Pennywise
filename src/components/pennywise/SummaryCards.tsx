@@ -42,8 +42,8 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
   }
 
   return (
-    <div className="grid gap-4 grid-cols-2">
-      <Card className="col-span-1">
+    <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+      <Card className="md:col-span-1">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total Income</CardTitle>
           <ArrowUpCircle className="h-5 w-5 text-green-500" />
@@ -52,7 +52,7 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
           <div className="text-2xl font-bold">{formatRupiah(income)}</div>
         </CardContent>
       </Card>
-      <Card className="col-span-1">
+      <Card className="md:col-span-1">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
           <ArrowDownCircle className="h-5 w-5 text-red-500" />
@@ -61,7 +61,7 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
           <div className="text-2xl font-bold">{formatRupiah(expenses)}</div>
         </CardContent>
       </Card>
-      <Card className="col-span-2">
+      <Card className="md:col-span-2">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Balance</CardTitle>
           <Wallet className="h-5 w-5 text-blue-500" />
@@ -72,7 +72,7 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
           </div>
         </CardContent>
       </Card>
-      <Card className="col-span-2">
+      <Card className="md:col-span-2">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-medium">Spending Limit</CardTitle>
