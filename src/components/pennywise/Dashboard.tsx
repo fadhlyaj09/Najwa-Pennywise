@@ -52,6 +52,7 @@ export default function Dashboard() {
       }
     }
     
+    // Default categories are the fallback.
     const initialDefaultCategories: Category[] = defaultCategories.map(cat => ({
       ...cat,
       id: `default-${cat.name.toLowerCase().replace(/\s+/g, '-')}`,
@@ -62,7 +63,7 @@ export default function Dashboard() {
     const storedCategoriesString = localStorage.getItem("pennywise_categories");
     if (storedCategoriesString) {
       try {
-        // Important: ensure user-defined categories are explicitly marked as not default.
+        // User-defined categories are NEVER default.
         userCategories = JSON.parse(storedCategoriesString).map((cat: Omit<Category, 'isDefault'>) => ({ ...cat, id: cat.id || crypto.randomUUID(), isDefault: false }));
       } catch(e) {
         console.error("Failed to parse categories from localStorage", e);
@@ -124,7 +125,7 @@ export default function Dashboard() {
        })
        return; 
     }
-    // Ensure new categories added by user are explicitly not default.
+    // New categories added by user are never default.
     const newCategory: Category = { ...category, id: crypto.randomUUID(), isDefault: false };
     setCategories(prev => [...prev, newCategory]);
   };
@@ -190,7 +191,7 @@ export default function Dashboard() {
       <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
           <NextLink href="/" passHref>
-            <h1 className="text-xl md:text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent text-transparent bg-clip-text cursor-pointer">
+            <h1 className="text-xl md:text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent text-transparent bg-clip-text cursor-pointer pl-2 md:pl-0">
               Najwa<span className="hidden md:inline"> Pennywise</span>
             </h1>
           </NextLink>
