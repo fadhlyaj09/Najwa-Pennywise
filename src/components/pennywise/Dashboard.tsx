@@ -54,10 +54,17 @@ export default function Dashboard() {
         isDefault: true,
     }));
     
-    const storedCategoriesString = localStorage.getItem("pennywise_categories");
-    const userCategories: Category[] = storedCategoriesString 
-        ? JSON.parse(storedCategoriesString)
-        : [];
+    let userCategories: Category[] = [];
+    try {
+        const storedCategoriesString = localStorage.getItem("pennywise_categories");
+        if (storedCategoriesString) {
+            // IMPORTANT: Ensure user categories are correctly marked as NOT default
+            userCategories = JSON.parse(storedCategoriesString).map((cat: Category) => ({ ...cat, isDefault: false }));
+        }
+    } catch(e) {
+        console.error("Failed to parse categories from localStorage", e);
+        userCategories = [];
+    }
 
     setCategories([...initialDefaultCategories, ...userCategories]);
 
