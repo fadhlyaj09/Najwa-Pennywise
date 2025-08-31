@@ -24,19 +24,16 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
 
   const handleLimitSave = () => {
     const limitAsNumber = Number(newLimit);
-    onSetSpendingLimit(isNaN(limitAsNumber) ? 0 : limitAsNumber);
+    if (newLimit === '' || isNaN(limitAsNumber)) {
+      onSetSpendingLimit(0);
+    } else {
+      onSetSpendingLimit(limitAsNumber);
+    }
     setIsEditingLimit(false);
   }
 
   const handleLimitChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.value === "") {
-        setNewLimit("");
-    } else {
-        const value = Number(e.target.value);
-        if (!isNaN(value)) {
-            setNewLimit(value);
-        }
-    }
+    setNewLimit(e.target.value);
   };
 
   const formatRupiah = (amount: number) => {
@@ -44,7 +41,7 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-2">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total Income</CardTitle>
@@ -83,7 +80,10 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
                   <Check className="h-4 w-4" />
                 </Button>
               ) : (
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsEditingLimit(true)}>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
+                    setNewLimit(spendingLimit);
+                    setIsEditingLimit(true);
+                }}>
                   <Edit className="h-4 w-4" />
                 </Button>
               )}
@@ -96,6 +96,7 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
               onBlur={handleLimitSave}
               onKeyDown={(e) => e.key === 'Enter' && handleLimitSave()}
               className="mt-1 h-8"
+              placeholder="Enter limit"
             />
           ) : (
             <div className="text-2xl font-bold">{formatRupiah(spendingLimit)}</div>

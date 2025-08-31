@@ -56,9 +56,9 @@ export default function Dashboard() {
     const categoryMap = new Map<string, Category>();
 
     // Add default categories first, giving them a unique ID
-    defaultCategories.forEach((defaultCat) => {
+    defaultCategories.forEach((defaultCat, index) => {
       // Use a consistent but unique ID format for defaults
-      categoryMap.set(defaultCat.name.toLowerCase(), { ...defaultCat, id: `default-${defaultCat.name.toLowerCase()}` });
+      categoryMap.set(defaultCat.name.toLowerCase(), { ...defaultCat, id: `default-${index}` });
     });
     
     // Then, overwrite with stored categories to respect user's data and custom IDs
@@ -185,22 +185,20 @@ export default function Dashboard() {
       </header>
       
       <main className="flex-1 container py-6">
-        <div className="grid gap-6">
-          <SummaryCards 
-            income={income}
-            expenses={expenses}
-            balance={balance}
-            spendingLimit={spendingLimit}
-            onSetSpendingLimit={setSpendingLimit}
-          />
-          <div className="grid grid-cols-1 gap-6">
-            <div>
-              <TransactionHistory transactions={transactions} />
-            </div>
-            <div className="space-y-6">
-              <WeeklyChart transactions={transactions} />
-              <AiReport transactions={transactions} spendingLimit={spendingLimit} income={income} expenses={expenses} />
-            </div>
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <TransactionHistory transactions={transactions} />
+          </div>
+          <div className="space-y-6">
+            <SummaryCards 
+              income={income}
+              expenses={expenses}
+              balance={balance}
+              spendingLimit={spendingLimit}
+              onSetSpendingLimit={setSpendingLimit}
+            />
+            <WeeklyChart transactions={transactions} />
+            <AiReport transactions={transactions} spendingLimit={spendingLimit} income={income} expenses={expenses} />
           </div>
         </div>
       </main>
