@@ -27,6 +27,11 @@ export default function Dashboard() {
 
   useEffect(() => {
     setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) return;
+
     // Load transactions
     const storedTransactions = localStorage.getItem("pennywise_transactions");
     if (storedTransactions) {
@@ -61,7 +66,6 @@ export default function Dashboard() {
     // Then, add user-stored categories, ensuring they have a type
     storedCategories.forEach(cat => {
         const isDefault = defaultCategories.some(dc => dc.name.toLowerCase() === cat.name.toLowerCase());
-        // Fallback for older categories that might not have a type
         const type = cat.type || 'expense'; 
         categoryMap.set(cat.name.toLowerCase(), { ...cat, type, isDefault });
     });
@@ -79,7 +83,7 @@ export default function Dashboard() {
         setSpendingLimit(5000000);
       }
     }
-  }, []);
+  }, [isClient]);
 
   useEffect(() => {
     if(isClient) {
@@ -89,7 +93,6 @@ export default function Dashboard() {
 
   useEffect(() => {
     if(isClient) {
-      // Only store categories that are not the original defaults
       const userDefinedCategories = categories.filter(c => !c.isDefault);
       localStorage.setItem("pennywise_categories", JSON.stringify(userDefinedCategories));
     }
@@ -102,7 +105,7 @@ export default function Dashboard() {
   }, [spendingLimit, isClient]);
 
   const addTransaction = (transaction: Omit<Transaction, "id">) => {
-    const categoryExists = categories.some(c => c.name.toLowerCase() === transaction.category.toLowerCase());
+    const categoryExists = categories.some(c => c.name.toLowerCase() === transaction.category.toLowerCase() && c.type === transaction.type);
     if (!categoryExists) {
         addCategory({ name: transaction.category, icon: 'Tag', type: transaction.type });
     }
@@ -113,13 +116,15 @@ export default function Dashboard() {
   const addCategory = (category: Omit<Category, "id" | 'isDefault'>) => {
     const existingCategory = categories.find(c => c.name.toLowerCase() === category.name.toLowerCase());
     if (existingCategory) {
-       return; // Do nothing if category already exists
+       return; 
     }
     const newCategory: Category = { ...category, id: crypto.randomUUID(), isDefault: false };
     setCategories(prev => [...prev, newCategory]);
   };
   
   const deleteCategory = (id: string) => {
+    const catToDelete = categories.find(c => c.id === id);
+    if (catToDelete?.isDefault) return; // Prevent deleting default categories
     setCategories(prev => prev.filter(c => c.id !== id));
   };
   
@@ -137,7 +142,6 @@ export default function Dashboard() {
   const [transactionFormOpen, setTransactionFormOpen] = useState(false);
   const [categoryManagerOpen, setCategoryManagerOpen] = useState(false);
 
-  // For the form, we want to provide sorted lists of categories based on their type
   const incomeCategories = useMemo(() => {
       return categories
           .filter(c => c.type === 'income')
@@ -163,15 +167,13 @@ export default function Dashboard() {
                   <Tags className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent className="flex flex-col">
-                <SheetHeader>
+              <SheetContent className="flex flex-col p-0">
+                <SheetHeader className="p-4 border-b">
                   <SheetTitle>Manage Categories</SheetTitle>
                 </SheetHeader>
                 <CategoryManager 
                   categories={categories} 
-                  onAddCategory={(cat) => {
-                      addCategory(cat);
-                  }} 
+                  onAddCategory={addCategory} 
                   onDeleteCategory={deleteCategory} 
                 />
               </SheetContent>
@@ -208,7 +210,7 @@ export default function Dashboard() {
       </header>
       
       <main className="flex-1 container py-6">
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">
              <SummaryCards 
               income={income}
@@ -219,7 +221,7 @@ export default function Dashboard() {
             />
             <TransactionHistory transactions={transactions} />
           </div>
-          <div className="space-y-6">
+          <div className="lg:col-span-1 space-y-6">
             <WeeklyChart transactions={transactions} />
             <AiReport transactions={transactions} spendingLimit={spendingLimit} income={income} expenses={expenses} />
           </div>
