@@ -1,3 +1,5 @@
+import Dashboard from "@/components/pennywise/Dashboard";
+
 export default function Home() {
-  return <></>;
+  return <Dashboard />;
 }
