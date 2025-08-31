@@ -32,6 +32,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     setIsClient(true);
+    // Load transactions
     const storedTransactions = localStorage.getItem("pennywise_transactions");
     if (storedTransactions) {
       try {
@@ -42,6 +43,7 @@ export default function Dashboard() {
       }
     }
     
+    // Load categories
     let storedCategories: Category[] = [];
     try {
         const storedCategoriesString = localStorage.getItem("pennywise_categories");
@@ -55,17 +57,20 @@ export default function Dashboard() {
 
     const categoryMap = new Map<string, Category>();
 
-    defaultCategories.forEach((defaultCat, index) => {
-      categoryMap.set(defaultCat.name.toLowerCase(), { ...defaultCat, id: `default-${index}` });
+    // Add default categories with unique IDs
+    defaultCategories.forEach((defaultCat) => {
+      categoryMap.set(defaultCat.name.toLowerCase(), { ...defaultCat, id: `default-${defaultCat.name.toLowerCase()}` });
     });
     
+    // Add/overwrite with user-stored categories
     storedCategories.forEach(cat => {
-      categoryMap.set(cat.name.toLowerCase(), cat);
+      categoryMap.set(cat.name.toLowerCase(), cat); // User's category (with its own id) overwrites default
     });
     
     setCategories(Array.from(categoryMap.values()));
 
 
+    // Load spending limit
     const storedLimit = localStorage.getItem("pennywise_limit");
     if (storedLimit) {
       try {
@@ -85,6 +90,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if(isClient) {
+      // Filter out the default categories that haven't been "overwritten" by a user-added one with a non-default ID
       const userDefinedCategories = categories.filter(c => !c.id.startsWith('default-'));
       localStorage.setItem("pennywise_categories", JSON.stringify(userDefinedCategories));
     }
@@ -97,6 +103,7 @@ export default function Dashboard() {
   }, [spendingLimit, isClient]);
 
   const addTransaction = (transaction: Omit<Transaction, "id">) => {
+    // Check if the category exists, case-insensitively
     const categoryExists = categories.some(c => c.name.toLowerCase() === transaction.category.toLowerCase());
     if (!categoryExists) {
         addCategory({ name: transaction.category, icon: 'Tag' });
@@ -106,6 +113,20 @@ export default function Dashboard() {
   };
 
   const addCategory = (category: Omit<Category, "id">) => {
+    // Check if a category with the same name already exists (case-insensitive)
+    const existingCategory = categories.find(c => c.name.toLowerCase() === category.name.toLowerCase());
+    if (existingCategory) {
+        // If it exists but has a default ID, we can "claim" it by giving it a real ID.
+        // This is not strictly necessary with the current setup but is good practice.
+        if (existingCategory.id.startsWith('default-')) {
+            setCategories(prev => prev.map(c => 
+                c.id === existingCategory.id ? { ...c, id: crypto.randomUUID() } : c
+            ));
+        }
+        // If it exists with a non-default ID, do nothing.
+        return;
+    }
+    // If it doesn't exist, add it as a new category.
     const newCategory = { ...category, id: crypto.randomUUID() };
     setCategories(prev => [...prev, newCategory]);
   };
@@ -124,8 +145,13 @@ export default function Dashboard() {
   const [transactionFormOpen, setTransactionFormOpen] = useState(false);
   const [categoryManagerOpen, setCategoryManagerOpen] = useState(false);
 
-  const incomeCategories = categories.filter(c => c.name === 'Salary');
-  const expenseCategories = categories.filter(c => c.name !== 'Salary');
+  // For the form, we want to provide sorted lists of categories
+  const incomeCategories = useMemo(() => categories.filter(c => c.name === 'Salary'), [categories]);
+  const expenseCategories = useMemo(() => {
+    return categories
+      .filter(c => c.name !== 'Salary')
+      .sort((a,b) => a.name.localeCompare(b.name));
+  }, [categories]);
 
 
   return (
@@ -140,7 +166,7 @@ export default function Dashboard() {
                   <Tags className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent>
+              <SheetContent className="flex flex-col">
                 <SheetHeader>
                   <SheetTitle>Manage Categories</SheetTitle>
                 </SheetHeader>
