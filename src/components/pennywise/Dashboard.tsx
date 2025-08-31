@@ -17,16 +17,16 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { useAuth } from "@/hooks/use-auth";
 
 const defaultCategories: Omit<Category, 'id' | 'isDefault'>[] = [
-  { name: 'Salary', icon: 'Landmark', type: 'income' },
-  { name: 'Breakfast', icon: 'Coffee', type: 'expense' },
-  { name: 'Lunch', icon: 'Utensils', type: 'expense' },
-  { name: 'Dinner', icon: 'UtensilsCrossed', type: 'expense' },
-  { name: 'Groceries', icon: 'ShoppingCart', type: 'expense' },
-  { name: 'Transport', icon: 'Car', type: 'expense' },
-  { name: 'Snacks', icon: 'Cookie', type: 'expense' },
-  { name: 'Monthly Shopping', icon: 'ShoppingBag', type: 'expense' },
-  { name: 'Hangout', icon: 'Users', type: 'expense' },
-  { name: 'Internet Quota', icon: 'Wifi', type: 'expense' },
+    { name: 'Salary', icon: 'Landmark', type: 'income' },
+    { name: 'Breakfast', icon: 'Coffee', type: 'expense' },
+    { name: 'Lunch', icon: 'Utensils', type: 'expense' },
+    { name: 'Dinner', icon: 'UtensilsCrossed', type: 'expense' },
+    { name: 'Groceries', icon: 'ShoppingCart', type: 'expense' },
+    { name: 'Transport', icon: 'Car', type: 'expense' },
+    { name: 'Snacks', icon: 'Cookie', type: 'expense' },
+    { name: 'Monthly Shopping', icon: 'ShoppingBag', type: 'expense' },
+    { name_above: 'Hangout', icon: 'Users', type: 'expense' },
+    { name: 'Internet Quota', icon: 'Wifi', type: 'expense' },
 ];
 
 export default function Dashboard() {
@@ -56,7 +56,7 @@ export default function Dashboard() {
     
     const storedCategoriesString = localStorage.getItem("pennywise_categories");
     const userCategories: Category[] = storedCategoriesString 
-        ? JSON.parse(storedCategoriesString).map((cat: Omit<Category, 'isDefault'>) => ({...cat, isDefault: false}))
+        ? JSON.parse(storedCategoriesString)
         : [];
 
     setCategories([...initialDefaultCategories, ...userCategories]);
@@ -221,5 +221,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
-    
