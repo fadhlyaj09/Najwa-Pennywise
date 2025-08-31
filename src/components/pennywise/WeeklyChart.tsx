@@ -3,7 +3,7 @@
 import { useMemo } from "react"
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart"
 import type { Transaction } from "@/lib/types"
 import { getWeek, parseISO } from "date-fns"
 
@@ -77,6 +77,7 @@ const WeeklyChart = ({ transactions }: WeeklyChartProps) => {
                   cursor={false}
                   content={<ChartTooltipContent indicator="dot" />}
                 />
+                <ChartLegend content={<ChartLegendContent />} />
                 <Bar dataKey="income" fill="var(--color-income)" radius={4} />
                 <Bar dataKey="expenses" fill="var(--color-expenses)" radius={4} />
               </BarChart>

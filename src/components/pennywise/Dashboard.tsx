@@ -16,6 +16,15 @@ import { useAuth } from "@/hooks/use-auth";
 
 const defaultCategories: Omit<Category, 'id' | 'isDefault'>[] = [
   { name: 'Salary', icon: 'Landmark', type: 'income' },
+  { name: 'Breakfast', icon: 'Coffee', type: 'expense' },
+  { name: 'Lunch', icon: 'Utensils', type: 'expense' },
+  { name: 'Dinner', icon: 'UtensilsCrossed', type: 'expense' },
+  { name: 'Groceries', icon: 'ShoppingCart', type: 'expense' },
+  { name: 'Transport', icon: 'Car', type: 'expense' },
+  { name: 'Snacks', icon: 'Cookie', type: 'expense' },
+  { name: 'Monthly Shopping', icon: 'ShoppingBag', type: 'expense' },
+  { name: 'Hangout', icon: 'Users', type: 'expense' },
+  { name: 'Internet Quota', icon: 'Wifi', type: 'expense' },
 ];
 
 export default function Dashboard() {
@@ -59,7 +68,7 @@ export default function Dashboard() {
     
     // Add default categories first, ensuring they have a type
     defaultCategories.forEach((defaultCat, index) => {
-        const id = `default-${index}`;
+        const id = `default-${defaultCat.name.toLowerCase().replace(' ', '-')}`;
         categoryMap.set(defaultCat.name.toLowerCase(), { ...defaultCat, id, isDefault: true });
     });
     
@@ -210,8 +219,8 @@ export default function Dashboard() {
       </header>
       
       <main className="flex-1 container py-6">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-6">
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-1 space-y-6">
              <SummaryCards 
               income={income}
               expenses={expenses}
@@ -219,6 +228,8 @@ export default function Dashboard() {
               spendingLimit={spendingLimit}
               onSetSpendingLimit={setSpendingLimit}
             />
+          </div>
+          <div className="lg:col-span-1 space-y-6">
             <TransactionHistory transactions={transactions} />
           </div>
           <div className="lg:col-span-1 space-y-6">
