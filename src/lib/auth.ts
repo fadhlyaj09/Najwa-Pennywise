@@ -7,7 +7,7 @@ export const FAKE_USER = {
 };
 
 // Function to get users from localStorage
-const getStoredUsers = () => {
+const getStoredUsers = (): Array<{email: string, password: string}> => {
     if (typeof window === 'undefined') {
         return [];
     }
@@ -15,17 +15,27 @@ const getStoredUsers = () => {
     try {
         return usersJson ? JSON.parse(usersJson) : [];
     } catch (e) {
+        console.error("Failed to parse users from localStorage", e);
         return [];
     }
 }
+
+// Function to get all users (default + stored)
+const getAllUsers = () => {
+    const storedUsers = getStoredUsers();
+    // Use a Map to handle potential duplicates, preferring stored users over default
+    const userMap = new Map<string, {email: string, password: string}>();
+    userMap.set(FAKE_USER.email.toLowerCase(), FAKE_USER);
+    storedUsers.forEach(user => userMap.set(user.email.toLowerCase(), user));
+    return Array.from(userMap.values());
+}
+
 
 export async function authenticate(email: string, pass: string): Promise<boolean> {
   // Simulate network delay
   await new Promise(resolve => setTimeout(resolve, 500));
 
-  const storedUsers = getStoredUsers();
-  const allUsers = [FAKE_USER, ...storedUsers];
-
+  const allUsers = getAllUsers();
   const user = allUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
 
   if (user && user.password === pass) {
@@ -42,13 +52,14 @@ export async function registerUser(email: string, pass: string): Promise<{succes
         return { success: false, message: 'Registration is only available on the client.' };
     }
 
-    const storedUsers = getStoredUsers();
-    const userExists = storedUsers.some((u: {email: string}) => u.email.toLowerCase() === email.toLowerCase());
+    const allUsers = getAllUsers();
+    const userExists = allUsers.some(u => u.email.toLowerCase() === email.toLowerCase());
     
     if (userExists) {
         return { success: false, message: 'Email sudah terdaftar.' };
     }
 
+    const storedUsers = getStoredUsers();
     const newUser = { email, password: pass };
     storedUsers.push(newUser);
     localStorage.setItem('pennywise_users', JSON.stringify(storedUsers));
