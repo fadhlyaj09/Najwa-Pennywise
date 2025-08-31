@@ -46,10 +46,12 @@ export default function Dashboard() {
     const storedCategories = localStorage.getItem("pennywise_categories");
     if (storedCategories) {
       try {
-        const parsedCategories = JSON.parse(storedCategories);
-        // Merge stored categories with default categories, avoiding duplicates
-        const categoryNames = new Set(parsedCategories.map((c: Category) => c.name));
-        const mergedCategories = [...parsedCategories];
+        const parsedCategories: Category[] = JSON.parse(storedCategories);
+        // Filter out "Rent" category from stored categories
+        const filteredCategories = parsedCategories.filter(c => c.name !== 'Rent');
+        
+        const categoryNames = new Set(filteredCategories.map((c: Category) => c.name));
+        const mergedCategories = [...filteredCategories];
         defaultCategories.forEach(dc => {
           if (!categoryNames.has(dc.name)) {
             mergedCategories.push(dc);
@@ -94,6 +96,11 @@ export default function Dashboard() {
   }, [spendingLimit, isClient]);
 
   const addTransaction = (transaction: Omit<Transaction, "id">) => {
+    // Check if the category is new
+    const categoryExists = categories.some(c => c.name.toLowerCase() === transaction.category.toLowerCase());
+    if (!categoryExists) {
+        addCategory({ name: transaction.category, icon: 'Tag' });
+    }
     const newTransaction = { ...transaction, id: crypto.randomUUID() };
     setTransactions(prev => [newTransaction, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
   };

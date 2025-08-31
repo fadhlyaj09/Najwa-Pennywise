@@ -24,12 +24,17 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { Category, Transaction } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ChevronsUpDown } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
+import React from "react";
 
 const formSchema = z.object({
   type: z.enum(["income", "expense"], { required_error: "Please select a transaction type." }),
   amount: z.coerce.number().positive({ message: "Amount must be positive." }),
   date: z.string().refine((val) => !isNaN(Date.parse(val)), { message: "Invalid date" }),
-  category: z.string().min(1, { message: "Please select a category." }),
+  category: z.string().min(1, { message: "Please select or create a category." }),
 });
 
 interface TransactionFormProps {
@@ -61,10 +66,16 @@ export default function TransactionForm({ incomeCategories, expenseCategories, o
       title: "Success!",
       description: "Your transaction has been added.",
     });
-    form.reset();
+    form.reset({
+      type: "expense",
+      amount: 0,
+      date: format(new Date(), "yyyy-MM-dd"),
+      category: "",
+    });
   }
   
   const categories = transactionType === 'income' ? incomeCategories : expenseCategories;
+  const [open, setOpen] = React.useState(false);
 
   return (
     <Form {...form}>
@@ -124,22 +135,63 @@ export default function TransactionForm({ incomeCategories, expenseCategories, o
           control={form.control}
           name="category"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="flex flex-col">
               <FormLabel>Category</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.name}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+               <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className={cn(
+                        "w-full justify-between",
+                        !field.value && "text-muted-foreground"
+                      )}
+                    >
+                      {field.value
+                        ? categories.find(
+                            (cat) => cat.name.toLowerCase() === field.value.toLowerCase()
+                          )?.name
+                        : "Select or type a category"}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                  <Command>
+                    <CommandInput 
+                      placeholder="Search or create category..." 
+                      onValueChange={(search) => {
+                        // Allow creating a new category by typing it
+                        if (!categories.some(c => c.name.toLowerCase() === search.toLowerCase())) {
+                           field.onChange(search);
+                        }
+                      }}
+                    />
+                    <CommandList>
+                      <CommandEmpty>
+                        {
+                          field.value ? `Create new category: "${field.value}"` : "No category found."
+                        }
+                      </CommandEmpty>
+                      <CommandGroup>
+                        {categories.map((cat) => (
+                          <CommandItem
+                            value={cat.name}
+                            key={cat.id}
+                            onSelect={() => {
+                              form.setValue("category", cat.name)
+                              setOpen(false)
+                            }}
+                          >
+                            {cat.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
               <FormMessage />
             </FormItem>
           )}
