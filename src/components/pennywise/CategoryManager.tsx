@@ -35,11 +35,14 @@ export default function CategoryManager({ categories, onAddCategory }: CategoryM
     <div className="space-y-4 pt-4">
       <div>
         <h4 className="text-sm font-medium mb-2">Existing Categories</h4>
-        <ScrollArea className="h-40">
-          <div className="flex flex-wrap gap-2 p-1">
+        <ScrollArea className="h-40 rounded-md border">
+          <div className="flex flex-wrap gap-2 p-2">
             {categories.map((cat) => (
               <Badge key={cat.id} variant="secondary">{cat.name}</Badge>
             ))}
+            {categories.length === 0 && (
+              <p className="text-sm text-muted-foreground w-full text-center py-4">No categories added yet.</p>
+            )}
           </div>
         </ScrollArea>
       </div>
