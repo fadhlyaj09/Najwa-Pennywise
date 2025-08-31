@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo, type ReactNode } from "react";
 import NextLink from 'next/link';
-import { PlusCircle, Tags, LogOut, BookUser } from "lucide-react";
+import { PlusCircle, Tags, LogOut, BookUser, MoreVertical } from "lucide-react";
 import type { Transaction, Category } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import SummaryCards from "@/components/pennywise/SummaryCards";
@@ -15,6 +15,7 @@ import TransactionForm from "@/components/pennywise/TransactionForm";
 import CategoryManager from "@/components/pennywise/CategoryManager";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/use-auth";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const defaultCategories: Omit<Category, 'id' | 'isDefault'>[] = [
     { name: 'Salary', icon: 'Landmark', type: 'income' },
@@ -36,7 +37,6 @@ export default function Dashboard() {
   const [spendingLimit, setSpendingLimit] = useState<number>(5000000);
 
   useEffect(() => {
-    // Load transactions
     const storedTransactions = localStorage.getItem("pennywise_transactions");
     if (storedTransactions) {
       try {
@@ -47,7 +47,6 @@ export default function Dashboard() {
       }
     }
     
-    // Load categories
     const initialDefaultCategories: Category[] = defaultCategories.map(cat => ({
         ...cat,
         id: `default-${cat.name.toLowerCase().replace(/\s+/g, '-')}`,
@@ -58,18 +57,26 @@ export default function Dashboard() {
     try {
         const storedCategoriesString = localStorage.getItem("pennywise_categories");
         if (storedCategoriesString) {
-            // IMPORTANT: Ensure user categories are correctly marked as NOT default
-            userCategories = JSON.parse(storedCategoriesString).map((cat: Category) => ({ ...cat, isDefault: false }));
+            userCategories = JSON.parse(storedCategoriesString).map((cat: Omit<Category, 'isDefault'>) => ({ ...cat, isDefault: false }));
         }
     } catch(e) {
         console.error("Failed to parse categories from localStorage", e);
         userCategories = [];
     }
 
-    setCategories([...initialDefaultCategories, ...userCategories]);
+    const allCategories = [...initialDefaultCategories];
+    const userCategoryMap = new Map(userCategories.map(cat => [cat.id, cat]));
+    
+    allCategories.forEach(defaultCat => {
+        const potentialUserCat = userCategories.find(userCat => userCat.name.toLowerCase() === defaultCat.name.toLowerCase() && userCat.type === defaultCat.type);
+        if(potentialUserCat) {
+            userCategoryMap.delete(potentialUserCat.id);
+        }
+    });
+
+    setCategories([...initialDefaultCategories, ...Array.from(userCategoryMap.values())]);
 
 
-    // Load spending limit
     const storedLimit = localStorage.getItem("pennywise_limit");
     if (storedLimit) {
       try {
@@ -113,9 +120,8 @@ export default function Dashboard() {
   };
   
   const deleteCategory = (id: string) => {
-    // Prevent deletion if a transaction is using this category
     const categoryToDelete = categories.find(c => c.id === id);
-    if (!categoryToDelete) return;
+    if (!categoryToDelete || categoryToDelete.isDefault) return;
 
     const isCategoryInUse = transactions.some(t => t.category.toLowerCase() === categoryToDelete.name.toLowerCase());
     
@@ -159,38 +165,17 @@ export default function Dashboard() {
       <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
           <NextLink href="/" passHref>
-            <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent text-transparent bg-clip-text cursor-pointer">Najwa Pennywise</h1>
+            <h1 className="text-xl md:text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent text-transparent bg-clip-text cursor-pointer">
+              Najwa<span className="hidden sm:inline"> Pennywise</span>
+            </h1>
           </NextLink>
           <div className="flex items-center gap-2">
-            <NextLink href="/debt" passHref>
-               <Button variant="ghost" size="icon" aria-label="Manage Debt">
-                  <BookUser className="h-5 w-5" />
-                </Button>
-            </NextLink>
-
-            <Sheet open={categoryManagerOpen} onOpenChange={setCategoryManagerOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Manage Categories">
-                  <Tags className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent className="flex flex-col p-0">
-                <SheetHeader className="p-4 border-b">
-                  <SheetTitle>Manage Categories</SheetTitle>
-                </SheetHeader>
-                <CategoryManager 
-                  categories={categories} 
-                  onAddCategory={addCategory} 
-                  onDeleteCategory={deleteCategory} 
-                />
-              </SheetContent>
-            </Sheet>
-
+            
             <Dialog open={transactionFormOpen} onOpenChange={setTransactionFormOpen}>
               <DialogTrigger asChild>
-                <Button>
-                  <PlusCircle className="mr-2 h-5 w-5" />
-                  Add Transaction
+                <Button size="sm" className="relative">
+                  <PlusCircle className="h-5 w-5 md:mr-2" />
+                  <span className="hidden md:inline">Add Transaction</span>
                 </Button>
               </DialogTrigger>
               <DialogContent>
@@ -209,9 +194,59 @@ export default function Dashboard() {
               </DialogContent>
             </Dialog>
 
-            <Button variant="ghost" size="icon" aria-label="Logout" onClick={logout}>
-              <LogOut className="h-5 w-5" />
-            </Button>
+            <div className="hidden md:flex items-center gap-2">
+              <NextLink href="/debt" passHref>
+                 <Button variant="ghost" size="icon" aria-label="Manage Debt">
+                    <BookUser className="h-5 w-5" />
+                  </Button>
+              </NextLink>
+
+              <Sheet open={categoryManagerOpen} onOpenChange={setCategoryManagerOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" aria-label="Manage Categories">
+                    <Tags className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent className="flex flex-col p-0">
+                  <SheetHeader className="p-4 border-b">
+                    <SheetTitle>Manage Categories</SheetTitle>
+                  </SheetHeader>
+                  <CategoryManager 
+                    categories={categories} 
+                    onAddCategory={addCategory} 
+                    onDeleteCategory={deleteCategory} 
+                  />
+                </SheetContent>
+              </Sheet>
+              
+              <Button variant="ghost" size="icon" aria-label="Logout" onClick={logout}>
+                <LogOut className="h-5 w-5" />
+              </Button>
+            </div>
+
+            <div className="md:hidden">
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                            <MoreVertical className="h-5 w-5" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                         <DropdownMenuItem onSelect={() => router.push('/debt')}>
+                            <BookUser className="mr-2 h-4 w-4" />
+                            <span>Manage Debt</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => setCategoryManagerOpen(true)}>
+                            <Tags className="mr-2 h-4 w-4" />
+                            <span>Manage Categories</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={logout}>
+                            <LogOut className="mr-2 h-4 w-4" />
+                            <span>Logout</span>
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
           </div>
         </div>
       </header>
@@ -239,5 +274,7 @@ export default function Dashboard() {
     </div>
   );
 }
+
+    
 
     
