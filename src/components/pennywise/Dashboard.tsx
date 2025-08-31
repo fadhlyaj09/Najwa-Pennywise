@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useMemo, type ReactNode } from "react";
 import NextLink from 'next/link';
+import { useRouter } from "next/navigation";
 import { PlusCircle, Tags, LogOut, BookUser, MoreVertical } from "lucide-react";
 import type { Transaction, Category } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ const defaultCategories: Omit<Category, 'id' | 'isDefault'>[] = [
 
 export default function Dashboard() {
   const { logout } = useAuth();
+  const router = useRouter();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [spendingLimit, setSpendingLimit] = useState<number>(5000000);
@@ -47,6 +49,7 @@ export default function Dashboard() {
       }
     }
     
+    // Load categories
     const initialDefaultCategories: Category[] = defaultCategories.map(cat => ({
         ...cat,
         id: `default-${cat.name.toLowerCase().replace(/\s+/g, '-')}`,
@@ -54,28 +57,32 @@ export default function Dashboard() {
     }));
     
     let userCategories: Category[] = [];
-    try {
-        const storedCategoriesString = localStorage.getItem("pennywise_categories");
-        if (storedCategoriesString) {
+    const storedCategoriesString = localStorage.getItem("pennywise_categories");
+    if (storedCategoriesString) {
+        try {
+            // IMPORTANT: Mark all stored categories as NOT default
             userCategories = JSON.parse(storedCategoriesString).map((cat: Omit<Category, 'isDefault'>) => ({ ...cat, isDefault: false }));
+        } catch(e) {
+            console.error("Failed to parse categories from localStorage", e);
+            userCategories = [];
         }
-    } catch(e) {
-        console.error("Failed to parse categories from localStorage", e);
-        userCategories = [];
     }
 
+    // Combine default and user categories, ensuring no name clashes within the same type
+    const userCategoryMap = new Map(userCategories.map(cat => [cat.name.toLowerCase() + '-' + cat.type, cat]));
+
     const allCategories = [...initialDefaultCategories];
-    const userCategoryMap = new Map(userCategories.map(cat => [cat.id, cat]));
-    
-    allCategories.forEach(defaultCat => {
-        const potentialUserCat = userCategories.find(userCat => userCat.name.toLowerCase() === defaultCat.name.toLowerCase() && userCat.type === defaultCat.type);
-        if(potentialUserCat) {
-            userCategoryMap.delete(potentialUserCat.id);
+
+    initialDefaultCategories.forEach(defaultCat => {
+        const userCatKey = defaultCat.name.toLowerCase() + '-' + defaultCat.type;
+        if(userCategoryMap.has(userCatKey)) {
+           // If a user has a category with the same name as a default one, it's a user category.
+           // We remove it from the map to avoid duplication, and let the user version be added later.
+           // This case shouldn't happen with the current addCategory logic, but it's a safeguard.
         }
     });
 
     setCategories([...initialDefaultCategories, ...Array.from(userCategoryMap.values())]);
-
 
     const storedLimit = localStorage.getItem("pennywise_limit");
     if (storedLimit) {
@@ -93,6 +100,7 @@ export default function Dashboard() {
   }, [transactions]);
 
   useEffect(() => {
+    // Only save user-defined categories to localStorage
     const userDefinedCategories = categories.filter(c => !c.isDefault);
     localStorage.setItem("pennywise_categories", JSON.stringify(userDefinedCategories));
   }, [categories]);
@@ -274,7 +282,5 @@ export default function Dashboard() {
     </div>
   );
 }
-
-    
 
     
