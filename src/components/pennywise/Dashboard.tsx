@@ -43,6 +43,7 @@ export default function Dashboard() {
 
    useEffect(() => {
     if (typeof window !== 'undefined') {
+      // Load transactions
       const storedTransactions = localStorage.getItem("pennywise_transactions");
       if (storedTransactions) {
         try {
@@ -53,16 +54,24 @@ export default function Dashboard() {
         }
       }
 
+      // Load categories
       const initialDefaultCategories: Category[] = defaultCategories.map(cat => ({
         ...cat,
         id: `default-${cat.name.toLowerCase().replace(/\s+/g, '-')}`,
         isDefault: true,
       }));
-
-      const storedCategoriesString = localStorage.getItem("pennywise_categories");
-      const userCategories: Category[] = storedCategoriesString 
-        ? JSON.parse(storedCategoriesString).map((c: any) => ({...c, isDefault: false}))
-        : [];
+      
+      const userCategories: Category[] = (() => {
+        const stored = localStorage.getItem("pennywise_categories");
+        if (!stored) return [];
+        try {
+          // Ensure every user category is marked as not default
+          return JSON.parse(stored).map((c: any) => ({...c, isDefault: false}));
+        } catch (e) {
+          console.error("Failed to parse categories:", e);
+          return [];
+        }
+      })();
 
       const combined = [...userCategories, ...initialDefaultCategories];
       const uniqueCategories = combined.filter((category, index, self) =>
@@ -72,6 +81,7 @@ export default function Dashboard() {
       );
       setCategories(uniqueCategories);
       
+      // Load spending limit
       const storedLimit = localStorage.getItem("pennywise_limit");
       if (storedLimit) {
         setSpendingLimit(JSON.parse(storedLimit));
@@ -93,24 +103,27 @@ export default function Dashboard() {
   const addTransaction = (transaction: Omit<Transaction, "id">) => {
     const categoryExists = categories.some(c => c.name.toLowerCase() === transaction.category.toLowerCase() && c.type === transaction.type);
     if (!categoryExists) {
+        // Pass a callback to addCategory to ensure it receives the latest state
         addCategory({ name: transaction.category, icon: 'Tag', type: transaction.type });
     }
     const newTransaction = { ...transaction, id: crypto.randomUUID() };
     setTransactions(prev => [newTransaction, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
   };
-
+  
   const addCategory = (category: Omit<Category, "id" | 'isDefault'>) => {
-    const existingCategory = categories.find(c => c.name.toLowerCase() === category.name.toLowerCase() && c.type === category.type);
-    if (existingCategory) {
-       toast({
-         variant: 'destructive',
-         title: 'Category exists',
-         description: `Category "${category.name}" for ${category.type} already exists.`
-       })
-       return; 
-    }
-    const newCategory: Category = { ...category, id: crypto.randomUUID(), isDefault: false };
-    setCategories(prev => [...prev, newCategory]);
+    setCategories(prev => {
+        const existingCategory = prev.find(c => c.name.toLowerCase() === category.name.toLowerCase() && c.type === category.type);
+        if (existingCategory) {
+           toast({
+             variant: 'destructive',
+             title: 'Category exists',
+             description: `Category "${category.name}" for ${category.type} already exists.`
+           });
+           return prev; 
+        }
+        const newCategory: Category = { ...category, id: crypto.randomUUID(), isDefault: false };
+        return [...prev, newCategory];
+    });
   };
   
   const deleteCategory = (id: string) => {
@@ -174,7 +187,7 @@ export default function Dashboard() {
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between">
+        <div className="w-full max-w-5xl mx-auto flex h-16 items-center justify-between px-4">
           <NextLink href="/" passHref>
             <h1 className="text-xl md:text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent text-transparent bg-clip-text cursor-pointer pl-2 md:pl-0">
               <span className="md:hidden">Najwa</span>
@@ -263,7 +276,7 @@ export default function Dashboard() {
         </div>
       </header>
       
-      <main className="flex-1 container py-6 px-4">
+      <main className="flex-1 w-full max-w-5xl mx-auto py-6 px-4">
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="lg:col-span-2 grid gap-6">
              <SummaryCards 
@@ -286,3 +299,5 @@ export default function Dashboard() {
     </div>
   );
 }
+
+    
