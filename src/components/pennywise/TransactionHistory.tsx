@@ -60,7 +60,7 @@ const TransactionHistory = ({ transactions }: TransactionHistoryProps) => {
         <CardTitle>Transaction History</CardTitle>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-[350px]">
+        <ScrollArea className="h-[450px]">
           {transactions.length === 0 ? (
              <div className="flex flex-col items-center justify-center h-full text-center">
                 <p className="text-lg font-semibold">No transactions yet</p>

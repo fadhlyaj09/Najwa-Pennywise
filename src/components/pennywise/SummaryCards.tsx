@@ -42,8 +42,8 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
   }
 
   return (
-    <div className="grid gap-4 grid-cols-2">
-      <Card className="col-span-1">
+    <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+      <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total Income</CardTitle>
           <ArrowUpCircle className="h-5 w-5 text-green-500" />
@@ -52,7 +52,7 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
           <div className="text-xl font-bold">{formatRupiah(income)}</div>
         </CardContent>
       </Card>
-      <Card className="col-span-1">
+      <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
           <ArrowDownCircle className="h-5 w-5 text-red-500" />
@@ -67,12 +67,12 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
           <Wallet className="h-5 w-5 text-blue-500" />
         </CardHeader>
         <CardContent>
-          <div className={`text-2xl font-bold ${balance >= 0 ? 'text-foreground' : 'text-red-500'}`}>
+          <div className={`text-xl font-bold ${balance >= 0 ? 'text-foreground' : 'text-red-500'}`}>
             {formatRupiah(balance)}
           </div>
         </CardContent>
       </Card>
-      <Card className="col-span-2">
+      <Card className="col-span-2 md:col-span-4">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-medium">Spending Limit</CardTitle>
@@ -100,7 +100,7 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
               placeholder="Enter limit"
             />
           ) : (
-            <div className="text-2xl font-bold">{formatRupiah(spendingLimit)}</div>
+            <div className="text-xl font-bold">{formatRupiah(spendingLimit)}</div>
           )}
         </CardHeader>
         <CardContent className="space-y-2">

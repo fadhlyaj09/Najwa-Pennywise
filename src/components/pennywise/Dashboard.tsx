@@ -53,8 +53,12 @@ export default function Dashboard() {
             id: `default-${cat.name.toLowerCase().replace(/\s+/g, '-')}`,
             isDefault: true,
         }));
+        
         const storedCategoriesString = localStorage.getItem("pennywise_categories");
-        const userCategories = storedCategoriesString ? JSON.parse(storedCategoriesString).map((c: any) => ({...c, isDefault: false})) : [];
+        const userCategories: Category[] = storedCategoriesString 
+            ? JSON.parse(storedCategoriesString).map((c: any) => ({...c, id: c.id || crypto.randomUUID(), isDefault: false})) 
+            : [];
+
         const combined = [...userCategories, ...initialDefaultCategories];
          const uniqueCategories = combined.filter((category, index, self) =>
             index === self.findIndex((c) => (
@@ -253,9 +257,9 @@ export default function Dashboard() {
         </div>
       </header>
       
-      <main className="flex-1 container py-6 px-6 md:px-8">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <div className="lg:col-span-1 flex flex-col gap-6">
+      <main className="flex-1 container py-6 px-4 md:px-8">
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="lg:col-span-2 grid gap-6">
              <SummaryCards 
               income={income}
               expenses={expenses}
