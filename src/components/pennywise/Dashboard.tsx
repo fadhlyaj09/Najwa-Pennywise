@@ -40,26 +40,26 @@ export default function Dashboard() {
       }
     }
     
-    const storedCategories = localStorage.getItem("pennywise_categories");
-    let initialCategories: Category[] = [];
-    if (storedCategories) {
-        try {
-            initialCategories = JSON.parse(storedCategories);
-        } catch (e) {
-            console.error("Failed to parse categories from localStorage", e);
-            initialCategories = [];
+    let storedCategories: Category[] = [];
+    try {
+        const storedCategoriesString = localStorage.getItem("pennywise_categories");
+        if(storedCategoriesString) {
+            storedCategories = JSON.parse(storedCategoriesString);
         }
+    } catch(e) {
+        console.error("Failed to parse categories from localStorage", e);
+        storedCategories = [];
     }
 
     const categoryMap = new Map<string, Category>();
-    
-    // Add default categories first
+
+    // Add default categories first, with unique IDs
     defaultCategories.forEach(defaultCat => {
-        categoryMap.set(defaultCat.name.toLowerCase(), { ...defaultCat, id: crypto.randomUUID() });
+        categoryMap.set(defaultCat.name.toLowerCase(), { ...defaultCat, id: `default-${defaultCat.name.toLowerCase()}` });
     });
     
     // Then, overwrite with stored categories to respect user's data and IDs
-    initialCategories.forEach(cat => {
+    storedCategories.forEach(cat => {
       categoryMap.set(cat.name.toLowerCase(), cat);
     });
     
@@ -132,7 +132,7 @@ export default function Dashboard() {
     <div className="flex flex-col min-h-screen bg-background">
       <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent text-transparent bg-clip-text">Pennywise</h1>
+          <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent text-transparent bg-clip-text">Najwa Pennywise</h1>
           <div className="flex items-center gap-2">
             <Sheet open={categoryManagerOpen} onOpenChange={setCategoryManagerOpen}>
               <SheetTrigger asChild>
