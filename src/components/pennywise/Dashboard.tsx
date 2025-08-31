@@ -113,6 +113,17 @@ export default function Dashboard() {
   };
   
   const deleteCategory = (id: string) => {
+    // Prevent deletion if a transaction is using this category
+    const categoryToDelete = categories.find(c => c.id === id);
+    if (!categoryToDelete) return;
+
+    const isCategoryInUse = transactions.some(t => t.category.toLowerCase() === categoryToDelete.name.toLowerCase());
+    
+    if (isCategoryInUse) {
+        alert(`Cannot delete category "${categoryToDelete.name}" because it is currently in use by one or more transactions.`);
+        return;
+    }
+
     setCategories(prev => prev.filter(c => c.id !== id));
   };
   
@@ -228,3 +239,5 @@ export default function Dashboard() {
     </div>
   );
 }
+
+    

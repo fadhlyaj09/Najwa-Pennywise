@@ -130,3 +130,5 @@ export default function CategoryManager({ categories, onAddCategory, onDeleteCat
     </div>
   );
 }
+
+    
