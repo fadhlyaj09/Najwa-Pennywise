@@ -47,28 +47,31 @@ export default function Dashboard() {
     if (storedCategories) {
         try {
             const parsedCategories: Category[] = JSON.parse(storedCategories);
-            const filteredCategories = parsedCategories.filter(c => c.name !== 'Rent');
-
-            const mergedCategories = [...filteredCategories];
-            const existingCategoryMap = new Map(filteredCategories.map(c => [c.name.toLowerCase(), c.id]));
-
-            defaultCategories.forEach(dc => {
-                const existingId = existingCategoryMap.get(dc.name.toLowerCase());
-                if (!existingId) {
-                    mergedCategories.push(dc);
-                } else if (existingId !== dc.id && !filteredCategories.some(fc => fc.id === dc.id)) {
-                    // This handles cases where a default category name exists but with a different (user-generated) id.
-                    // We avoid pushing the default one to prevent duplicates.
-                }
+            
+            // Deduplicate categories to prevent key errors
+            const categoryMap = new Map<string, Category>();
+            
+            // Add default categories first
+            defaultCategories.forEach(cat => {
+              if (cat.name.toLowerCase() !== 'rent') {
+                categoryMap.set(cat.name.toLowerCase(), cat)
+              }
+            });
+            
+            // Add/update with stored categories, giving them priority
+            parsedCategories.forEach(cat => {
+              if (cat.name.toLowerCase() !== 'rent') {
+                categoryMap.set(cat.name.toLowerCase(), cat)
+              }
             });
 
-            setCategories(mergedCategories);
+            setCategories(Array.from(categoryMap.values()));
         } catch (e) {
             console.error("Failed to parse categories from localStorage", e);
-            setCategories(defaultCategories);
+            setCategories(defaultCategories.filter(c => c.name.toLowerCase() !== 'rent'));
         }
     } else {
-       setCategories(defaultCategories);
+       setCategories(defaultCategories.filter(c => c.name.toLowerCase() !== 'rent'));
     }
 
     const storedLimit = localStorage.getItem("pennywise_limit");
