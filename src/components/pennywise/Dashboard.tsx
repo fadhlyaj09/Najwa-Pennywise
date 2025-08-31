@@ -52,25 +52,33 @@ export default function Dashboard() {
       }
     }
     
-    // Load categories
     const initialDefaultCategories: Category[] = defaultCategories.map(cat => ({
-        ...cat,
-        id: `default-${cat.name.toLowerCase().replace(/\s+/g, '-')}`,
-        isDefault: true,
+      ...cat,
+      id: `default-${cat.name.toLowerCase().replace(/\s+/g, '-')}`,
+      isDefault: true,
     }));
-    
+
     let userCategories: Category[] = [];
     const storedCategoriesString = localStorage.getItem("pennywise_categories");
     if (storedCategoriesString) {
-        try {
-            userCategories = JSON.parse(storedCategoriesString).map((cat: Omit<Category, 'isDefault'>) => ({ ...cat, isDefault: false }));
-        } catch(e) {
-            console.error("Failed to parse categories from localStorage", e);
-            userCategories = [];
-        }
+      try {
+        // Important: ensure user-defined categories are explicitly marked as not default.
+        userCategories = JSON.parse(storedCategoriesString).map((cat: Omit<Category, 'isDefault'>) => ({ ...cat, id: cat.id || crypto.randomUUID(), isDefault: false }));
+      } catch(e) {
+        console.error("Failed to parse categories from localStorage", e);
+        userCategories = [];
+      }
     }
+    
+    // Combine and remove duplicates, giving preference to user-defined categories if names conflict.
+    const combined = [...userCategories, ...initialDefaultCategories];
+    const uniqueCategories = combined.filter((category, index, self) =>
+      index === self.findIndex((c) => (
+        c.name.toLowerCase() === category.name.toLowerCase() && c.type === category.type
+      ))
+    );
 
-    setCategories([...initialDefaultCategories, ...userCategories]);
+    setCategories(uniqueCategories);
 
     // Load spending limit
     const storedLimit = localStorage.getItem("pennywise_limit");
@@ -116,13 +124,21 @@ export default function Dashboard() {
        })
        return; 
     }
+    // Ensure new categories added by user are explicitly not default.
     const newCategory: Category = { ...category, id: crypto.randomUUID(), isDefault: false };
     setCategories(prev => [...prev, newCategory]);
   };
   
   const deleteCategory = (id: string) => {
     const categoryToDelete = categories.find(c => c.id === id);
-    if (!categoryToDelete || categoryToDelete.isDefault) return;
+    if (!categoryToDelete || categoryToDelete.isDefault) {
+      toast({
+        variant: "destructive",
+        title: "Cannot delete category",
+        description: "Default categories cannot be deleted."
+      });
+      return;
+    };
 
     const isCategoryInUse = transactions.some(t => t.category.toLowerCase() === categoryToDelete.name.toLowerCase());
     
@@ -175,7 +191,7 @@ export default function Dashboard() {
         <div className="container flex h-16 items-center justify-between">
           <NextLink href="/" passHref>
             <h1 className="text-xl md:text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent text-transparent bg-clip-text cursor-pointer">
-              Najwa<span className="hidden sm:inline"> Pennywise</span>
+              Najwa<span className="hidden md:inline"> Pennywise</span>
             </h1>
           </NextLink>
           <div className="flex items-center gap-2">
