@@ -55,13 +55,10 @@ export default function Dashboard() {
 
     const categoryMap = new Map<string, Category>();
 
-    // Add default categories first, giving them a unique ID
     defaultCategories.forEach((defaultCat, index) => {
-      // Use a consistent but unique ID format for defaults
       categoryMap.set(defaultCat.name.toLowerCase(), { ...defaultCat, id: `default-${index}` });
     });
     
-    // Then, overwrite with stored categories to respect user's data and custom IDs
     storedCategories.forEach(cat => {
       categoryMap.set(cat.name.toLowerCase(), cat);
     });
@@ -88,8 +85,6 @@ export default function Dashboard() {
 
   useEffect(() => {
     if(isClient) {
-      // Filter out any default categories that might have been added to the state
-      // but shouldn't be persisted if they weren't modified or used.
       const userDefinedCategories = categories.filter(c => !c.id.startsWith('default-'));
       localStorage.setItem("pennywise_categories", JSON.stringify(userDefinedCategories));
     }
@@ -102,7 +97,6 @@ export default function Dashboard() {
   }, [spendingLimit, isClient]);
 
   const addTransaction = (transaction: Omit<Transaction, "id">) => {
-    // Check if the category is new
     const categoryExists = categories.some(c => c.name.toLowerCase() === transaction.category.toLowerCase());
     if (!categoryExists) {
         addCategory({ name: transaction.category, icon: 'Tag' });
@@ -186,17 +180,17 @@ export default function Dashboard() {
       
       <main className="flex-1 container py-6">
         <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <TransactionHistory transactions={transactions} />
-          </div>
-          <div className="space-y-6">
-            <SummaryCards 
+          <div className="lg:col-span-2 space-y-6">
+             <SummaryCards 
               income={income}
               expenses={expenses}
               balance={balance}
               spendingLimit={spendingLimit}
               onSetSpendingLimit={setSpendingLimit}
             />
+            <TransactionHistory transactions={transactions} />
+          </div>
+          <div className="space-y-6">
             <WeeklyChart transactions={transactions} />
             <AiReport transactions={transactions} spendingLimit={spendingLimit} income={income} expenses={expenses} />
           </div>
