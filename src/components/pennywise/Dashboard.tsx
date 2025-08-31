@@ -22,7 +22,7 @@ const defaultCategories: Category[] = [
   { id: 'cat6', name: 'Monthly Shopping', icon: 'ShoppingBag' },
   { id: 'cat7', name: 'Hanging Out', icon: 'Users' },
   { id: 'cat8', name: 'Transport', icon: 'Car' },
-  { id: 'cat9', name: 'Kuota Internet', icon: 'Wifi' },
+  { id: 'cat9', name: 'Internet Quota', icon: 'Wifi' },
 ];
 
 export default function Dashboard() {

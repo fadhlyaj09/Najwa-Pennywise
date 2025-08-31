@@ -6,7 +6,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Transaction } from "@/lib/types";
 import { format, parseISO } from "date-fns";
-import { type LucideIcon, ShoppingCart, Car, Landmark, Wallet, Utensils, Coffee, UtensilsCrossed, Cookie, ShoppingBag, Users, Wifi } from 'lucide-react';
+import { type LucideIcon, ShoppingCart, Car, Landmark, Wallet, Utensils, Coffee, UtensilsCrossed, Cookie, ShoppingBag, Users, Wifi, Tag } from 'lucide-react';
 
 const categoryIcons: { [key: string]: LucideIcon } = {
     'Groceries': ShoppingCart,
@@ -18,12 +18,14 @@ const categoryIcons: { [key: string]: LucideIcon } = {
     'Snacks': Cookie,
     'Monthly Shopping': ShoppingBag,
     'Hanging Out': Users,
-    'Kuota Internet': Wifi,
-    'Default': Wallet,
+    'Internet Quota': Wifi,
+    'Default': Tag,
 };
 
 const getCategoryIcon = (categoryName: string) => {
-    const Icon = categoryIcons[categoryName] || categoryIcons['Default'];
+    // Find a case-insensitive match for the category name
+    const foundKey = Object.keys(categoryIcons).find(key => key.toLowerCase() === categoryName.toLowerCase());
+    const Icon = categoryIcons[foundKey || 'Default'];
     return <Icon className="h-5 w-5 mr-3 text-muted-foreground" />;
 };
 
