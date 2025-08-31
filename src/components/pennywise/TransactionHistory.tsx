@@ -17,7 +17,7 @@ const categoryIcons: { [key: string]: LucideIcon } = {
     'Dinner': UtensilsCrossed,
     'Snacks': Cookie,
     'Monthly Shopping': ShoppingBag,
-    'Hanging Out': Users,
+    'Hangout': Users,
     'Internet Quota': Wifi,
     'Default': Tag,
 };

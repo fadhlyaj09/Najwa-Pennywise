@@ -20,7 +20,7 @@ const defaultCategories: Category[] = [
   { id: 'cat4', name: 'Dinner', icon: 'UtensilsCrossed' },
   { id: 'cat5', name: 'Snacks', icon: 'Cookie' },
   { id: 'cat6', name: 'Monthly Shopping', icon: 'ShoppingBag' },
-  { id: 'cat7', name: 'Hanging Out', icon: 'Users' },
+  { id: 'cat7', name: 'Hangout', icon: 'Users' },
   { id: 'cat8', name: 'Transport', icon: 'Car' },
 ];
 
