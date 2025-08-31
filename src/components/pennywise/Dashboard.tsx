@@ -47,23 +47,19 @@ export default function Dashboard() {
     }
     
     // Load categories
-    const storedCategoriesString = localStorage.getItem("pennywise_categories");
-    const userCategories = storedCategoriesString ? JSON.parse(storedCategoriesString) : [];
-
     const initialCategories: Category[] = defaultCategories.map(cat => ({
-      ...cat,
-      id: `default-${cat.name.toLowerCase().replace(/\s+/g, '-')}`,
-      isDefault: true,
+        ...cat,
+        id: `default-${cat.name.toLowerCase().replace(/\s+/g, '-')}`,
+        isDefault: true,
     }));
     
-    const combinedCategories = [...initialCategories];
-    userCategories.forEach((cat: Omit<Category, 'isDefault'>) => {
-        if (!combinedCategories.some(c => c.id === cat.id)) {
-            combinedCategories.push({ ...cat, id: cat.id || crypto.randomUUID(), isDefault: false });
-        }
-    });
+    const storedCategoriesString = localStorage.getItem("pennywise_categories");
+    const userCategories: Category[] = storedCategoriesString 
+        ? JSON.parse(storedCategoriesString).map((cat: Omit<Category, 'isDefault'>) => ({...cat, isDefault: false}))
+        : [];
 
-    setCategories(combinedCategories);
+    setCategories([...initialCategories, ...userCategories]);
+
 
     // Load spending limit
     const storedLimit = localStorage.getItem("pennywise_limit");
@@ -161,7 +157,7 @@ export default function Dashboard() {
                   <Tags className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent className="flex flex-col">
+              <SheetContent className="flex flex-col p-0">
                 <SheetHeader className="p-4 border-b">
                   <SheetTitle>Manage Categories</SheetTitle>
                 </SheetHeader>
@@ -205,7 +201,7 @@ export default function Dashboard() {
       
       <main className="flex-1 container py-6">
         <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-1 flex flex-col gap-6">
+          <div className="lg:col-span-2 flex flex-col gap-6">
              <SummaryCards 
               income={income}
               expenses={expenses}
@@ -213,9 +209,7 @@ export default function Dashboard() {
               spendingLimit={spendingLimit}
               onSetSpendingLimit={setSpendingLimit}
             />
-          </div>
-          <div className="lg:col-span-1 flex flex-col gap-6">
-            <TransactionHistory transactions={transactions} />
+             <TransactionHistory transactions={transactions} />
           </div>
           <div className="lg:col-span-1 flex flex-col gap-6">
             <WeeklyChart transactions={transactions} />

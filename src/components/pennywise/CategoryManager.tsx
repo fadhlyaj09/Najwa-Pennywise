@@ -43,8 +43,8 @@ export default function CategoryManager({ categories, onAddCategory, onDeleteCat
   });
 
   return (
-    <ScrollArea className="h-full px-4">
-      <div className="space-y-4">
+    <ScrollArea className="flex-1">
+      <div className="space-y-6 p-4">
         <div>
           <h4 className="text-sm font-medium mb-2">Add New Category</h4>
           <Form {...form}>
