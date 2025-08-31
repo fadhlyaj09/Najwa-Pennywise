@@ -17,6 +17,7 @@ import CategoryManager from "@/components/pennywise/CategoryManager";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/use-auth";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 
 const defaultCategories: Omit<Category, 'id' | 'isDefault'>[] = [
     { name: 'Salary', icon: 'Landmark', type: 'income' },
@@ -37,8 +38,10 @@ export default function Dashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [spendingLimit, setSpendingLimit] = useState<number>(5000000);
+  const { toast } = useToast();
 
   useEffect(() => {
+    // Load transactions
     const storedTransactions = localStorage.getItem("pennywise_transactions");
     if (storedTransactions) {
       try {
@@ -60,7 +63,6 @@ export default function Dashboard() {
     const storedCategoriesString = localStorage.getItem("pennywise_categories");
     if (storedCategoriesString) {
         try {
-            // IMPORTANT: Mark all stored categories as NOT default
             userCategories = JSON.parse(storedCategoriesString).map((cat: Omit<Category, 'isDefault'>) => ({ ...cat, isDefault: false }));
         } catch(e) {
             console.error("Failed to parse categories from localStorage", e);
@@ -68,22 +70,9 @@ export default function Dashboard() {
         }
     }
 
-    // Combine default and user categories, ensuring no name clashes within the same type
-    const userCategoryMap = new Map(userCategories.map(cat => [cat.name.toLowerCase() + '-' + cat.type, cat]));
+    setCategories([...initialDefaultCategories, ...userCategories]);
 
-    const allCategories = [...initialDefaultCategories];
-
-    initialDefaultCategories.forEach(defaultCat => {
-        const userCatKey = defaultCat.name.toLowerCase() + '-' + defaultCat.type;
-        if(userCategoryMap.has(userCatKey)) {
-           // If a user has a category with the same name as a default one, it's a user category.
-           // We remove it from the map to avoid duplication, and let the user version be added later.
-           // This case shouldn't happen with the current addCategory logic, but it's a safeguard.
-        }
-    });
-
-    setCategories([...initialDefaultCategories, ...Array.from(userCategoryMap.values())]);
-
+    // Load spending limit
     const storedLimit = localStorage.getItem("pennywise_limit");
     if (storedLimit) {
       try {
@@ -100,7 +89,6 @@ export default function Dashboard() {
   }, [transactions]);
 
   useEffect(() => {
-    // Only save user-defined categories to localStorage
     const userDefinedCategories = categories.filter(c => !c.isDefault);
     localStorage.setItem("pennywise_categories", JSON.stringify(userDefinedCategories));
   }, [categories]);
@@ -121,6 +109,11 @@ export default function Dashboard() {
   const addCategory = (category: Omit<Category, "id" | 'isDefault'>) => {
     const existingCategory = categories.find(c => c.name.toLowerCase() === category.name.toLowerCase() && c.type === category.type);
     if (existingCategory) {
+       toast({
+         variant: 'destructive',
+         title: 'Category exists',
+         description: `Category "${category.name}" for ${category.type} already exists.`
+       })
        return; 
     }
     const newCategory: Category = { ...category, id: crypto.randomUUID(), isDefault: false };
@@ -134,11 +127,19 @@ export default function Dashboard() {
     const isCategoryInUse = transactions.some(t => t.category.toLowerCase() === categoryToDelete.name.toLowerCase());
     
     if (isCategoryInUse) {
-        alert(`Cannot delete category "${categoryToDelete.name}" because it is currently in use by one or more transactions.`);
+        toast({
+            variant: "destructive",
+            title: "Cannot delete category",
+            description: `"${categoryToDelete.name}" is in use by one or more transactions.`
+        });
         return;
     }
 
     setCategories(prev => prev.filter(c => c.id !== id));
+    toast({
+      title: 'Success!',
+      description: `Category "${categoryToDelete.name}" has been deleted.`
+    });
   };
   
   const { income, expenses, balance } = useMemo(() => {
@@ -282,5 +283,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
-    

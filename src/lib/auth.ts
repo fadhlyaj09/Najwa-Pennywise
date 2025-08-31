@@ -13,7 +13,9 @@ const getStoredUsers = (): Array<{email: string, password: string}> => {
     }
     const usersJson = localStorage.getItem('pennywise_users');
     try {
-        return usersJson ? JSON.parse(usersJson) : [];
+        const storedUsers = usersJson ? JSON.parse(usersJson) : [];
+        // Ensure it always returns an array
+        return Array.isArray(storedUsers) ? storedUsers : [];
     } catch (e) {
         console.error("Failed to parse users from localStorage", e);
         return [];
@@ -56,18 +58,16 @@ export async function registerUser(email: string, pass: string): Promise<{succes
         return { success: false, message: 'Registration is only available on the client.' };
     }
 
-    const storedUsers = getStoredUsers();
-    const userExists = storedUsers.some(u => u.email.toLowerCase() === email.toLowerCase());
+    const allUsers = getAllUsers();
+    // Check against ALL users, including the default one if it's the only one.
+    const userExists = allUsers.some(u => u.email.toLowerCase() === email.toLowerCase());
     
     if (userExists) {
         return { success: false, message: 'Email sudah terdaftar.' };
     }
     
-    // Also check against the default user if no users are stored yet.
-    if (storedUsers.length === 0 && FAKE_USER.email.toLowerCase() === email.toLowerCase()) {
-         return { success: false, message: 'Email sudah terdaftar.' };
-    }
-
+    // Fetch ONLY stored users to append the new user
+    const storedUsers = getStoredUsers();
     const newUser = { email, password: pass };
     storedUsers.push(newUser);
     localStorage.setItem('pennywise_users', JSON.stringify(storedUsers));
