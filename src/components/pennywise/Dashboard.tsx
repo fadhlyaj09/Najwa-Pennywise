@@ -13,15 +13,14 @@ import TransactionForm from "@/components/pennywise/TransactionForm";
 import CategoryManager from "@/components/pennywise/CategoryManager";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
-const defaultCategories: Category[] = [
-  { id: 'cat1', name: 'Salary', icon: 'Landmark' },
-  { id: 'cat2', name: 'Breakfast', icon: 'Coffee' },
-  { id: 'cat3', name: 'Lunch', icon: 'Utensils' },
-  { id: 'cat4', name: 'Dinner', icon: 'UtensilsCrossed' },
-  { id: 'cat5', name: 'Snacks', icon: 'Cookie' },
-  { id: 'cat6', name: 'Monthly Shopping', icon: 'ShoppingBag' },
-  { id: 'cat7', name: 'Hangout', icon: 'Users' },
-  { id: 'cat8', name: 'Transport', icon: 'Car' },
+const defaultCategories: Omit<Category, 'id'>[] = [
+  { name: 'Salary', icon: 'Landmark' },
+  { name: 'Breakfast', icon: 'Coffee' },
+  { name: 'Lunch', icon: 'Utensils' },
+  { name: 'Dinner', icon: 'UtensilsCrossed' },
+  { name: 'Snacks', icon: 'Cookie' },
+  { name: 'Monthly Shopping', icon: 'ShoppingBag' },
+  { name: 'Hangout', icon: 'Users' },
 ];
 
 export default function Dashboard() {
@@ -48,23 +47,25 @@ export default function Dashboard() {
             const parsedCategories: Category[] = JSON.parse(storedCategories);
             const categoryMap = new Map<string, Category>();
 
-            // Add default categories first
-            defaultCategories.forEach(cat => {
+            // Add stored categories first to give them priority
+            parsedCategories.forEach(cat => {
               categoryMap.set(cat.name.toLowerCase(), cat);
             });
             
-            // Add/update with stored categories, giving them priority
-            parsedCategories.forEach(cat => {
-              categoryMap.set(cat.name.toLowerCase(), cat);
+            // Add default categories only if they don't already exist
+            defaultCategories.forEach(defaultCat => {
+              if (!categoryMap.has(defaultCat.name.toLowerCase())) {
+                categoryMap.set(defaultCat.name.toLowerCase(), { ...defaultCat, id: crypto.randomUUID() });
+              }
             });
 
             setCategories(Array.from(categoryMap.values()));
         } catch (e) {
             console.error("Failed to parse categories from localStorage", e);
-            setCategories(defaultCategories);
+             setCategories(defaultCategories.map(cat => ({ ...cat, id: crypto.randomUUID() })));
         }
     } else {
-       setCategories(defaultCategories);
+       setCategories(defaultCategories.map(cat => ({ ...cat, id: crypto.randomUUID() })));
     }
 
     const storedLimit = localStorage.getItem("pennywise_limit");
