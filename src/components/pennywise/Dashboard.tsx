@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, type ReactNode } from "react";
-import { PlusCircle, Tags, LogOut, Trash2 } from "lucide-react";
+import { PlusCircle, Tags, LogOut } from "lucide-react";
 import type { Transaction, Category } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import SummaryCards from "@/components/pennywise/SummaryCards";
@@ -15,14 +15,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { useAuth } from "@/hooks/use-auth";
 
 const defaultCategories: Omit<Category, 'id' | 'isDefault'>[] = [
-  { name: 'Salary', icon: 'Landmark' },
-  { name: 'Breakfast', icon: 'Coffee' },
-  { name: 'Lunch', icon: 'Utensils' },
-  { name: 'Dinner', icon: 'UtensilsCrossed' },
-  { name: 'Snacks', icon: 'Cookie' },
-  { name: 'Monthly Shopping', icon: 'ShoppingBag' },
-  { name: 'Hangout', icon: 'Users' },
-  { name: 'Internet Quota', icon: 'Wifi' },
+  { name: 'Salary', icon: 'Landmark', type: 'income' },
 ];
 
 export default function Dashboard() {
@@ -58,19 +51,19 @@ export default function Dashboard() {
     }
 
     const categoryMap = new Map<string, Category>();
-    const defaultCategoryNames = new Set(defaultCategories.map(dc => dc.name.toLowerCase()));
-
-    // Add default categories first
+    
+    // Add default categories first, ensuring they have a type
     defaultCategories.forEach((defaultCat, index) => {
         const id = `default-${index}`;
         categoryMap.set(defaultCat.name.toLowerCase(), { ...defaultCat, id, isDefault: true });
     });
     
-    // Then, add user-stored categories
+    // Then, add user-stored categories, ensuring they have a type
     storedCategories.forEach(cat => {
-        // A stored category is only a default if its name matches one from the hardcoded list
-        const isDefault = defaultCategoryNames.has(cat.name.toLowerCase());
-        categoryMap.set(cat.name.toLowerCase(), { ...cat, isDefault });
+        const isDefault = defaultCategories.some(dc => dc.name.toLowerCase() === cat.name.toLowerCase());
+        // Fallback for older categories that might not have a type
+        const type = cat.type || 'expense'; 
+        categoryMap.set(cat.name.toLowerCase(), { ...cat, type, isDefault });
     });
     
     setCategories(Array.from(categoryMap.values()));
@@ -109,10 +102,9 @@ export default function Dashboard() {
   }, [spendingLimit, isClient]);
 
   const addTransaction = (transaction: Omit<Transaction, "id">) => {
-    // Check if the category exists, case-insensitively
     const categoryExists = categories.some(c => c.name.toLowerCase() === transaction.category.toLowerCase());
     if (!categoryExists) {
-        addCategory({ name: transaction.category, icon: 'Tag' });
+        addCategory({ name: transaction.category, icon: 'Tag', type: transaction.type });
     }
     const newTransaction = { ...transaction, id: crypto.randomUUID() };
     setTransactions(prev => [newTransaction, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
@@ -123,7 +115,7 @@ export default function Dashboard() {
     if (existingCategory) {
        return; // Do nothing if category already exists
     }
-    const newCategory = { ...category, id: crypto.randomUUID(), isDefault: false };
+    const newCategory: Category = { ...category, id: crypto.randomUUID(), isDefault: false };
     setCategories(prev => [...prev, newCategory]);
   };
   
@@ -145,11 +137,16 @@ export default function Dashboard() {
   const [transactionFormOpen, setTransactionFormOpen] = useState(false);
   const [categoryManagerOpen, setCategoryManagerOpen] = useState(false);
 
-  // For the form, we want to provide sorted lists of categories
-  const incomeCategories = useMemo(() => categories.filter(c => c.name === 'Salary'), [categories]);
+  // For the form, we want to provide sorted lists of categories based on their type
+  const incomeCategories = useMemo(() => {
+      return categories
+          .filter(c => c.type === 'income')
+          .sort((a,b) => a.name.localeCompare(b.name));
+  }, [categories]);
+
   const expenseCategories = useMemo(() => {
     return categories
-      .filter(c => c.name !== 'Salary')
+      .filter(c => c.type === 'expense')
       .sort((a,b) => a.name.localeCompare(b.name));
   }, [categories]);
 
@@ -170,7 +167,13 @@ export default function Dashboard() {
                 <SheetHeader>
                   <SheetTitle>Manage Categories</SheetTitle>
                 </SheetHeader>
-                <CategoryManager categories={categories} onAddCategory={addCategory} onDeleteCategory={deleteCategory} />
+                <CategoryManager 
+                  categories={categories} 
+                  onAddCategory={(cat) => {
+                      addCategory(cat);
+                  }} 
+                  onDeleteCategory={deleteCategory} 
+                />
               </SheetContent>
             </Sheet>
 
