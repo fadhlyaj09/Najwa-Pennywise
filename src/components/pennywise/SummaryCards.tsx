@@ -17,15 +17,27 @@ interface SummaryCardsProps {
 
 const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingLimit }: SummaryCardsProps) => {
   const [isEditingLimit, setIsEditingLimit] = useState(false);
-  const [newLimit, setNewLimit] = useState(spendingLimit);
+  const [newLimit, setNewLimit] = useState<number | string>(spendingLimit);
 
   const spendingProgress = spendingLimit > 0 ? (expenses / spendingLimit) * 100 : 0;
   const limitExceeded = expenses > spendingLimit;
 
   const handleLimitSave = () => {
-    onSetSpendingLimit(newLimit);
+    const limitAsNumber = Number(newLimit);
+    onSetSpendingLimit(isNaN(limitAsNumber) ? 0 : limitAsNumber);
     setIsEditingLimit(false);
   }
+
+  const handleLimitChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.value === "") {
+        setNewLimit("");
+    } else {
+        const value = Number(e.target.value);
+        if (!isNaN(value)) {
+            setNewLimit(value);
+        }
+    }
+  };
 
   const formatRupiah = (amount: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
@@ -80,7 +92,9 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
             <Input 
               type="number"
               value={newLimit}
-              onChange={(e) => setNewLimit(Number(e.target.value))}
+              onChange={handleLimitChange}
+              onBlur={handleLimitSave}
+              onKeyDown={(e) => e.key === 'Enter' && handleLimitSave()}
               className="mt-1 h-8"
             />
           ) : (
