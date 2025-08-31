@@ -53,19 +53,18 @@ export default function Dashboard() {
 
     const categoryMap = new Map<string, Category>();
     
-    // Add stored categories first to give them priority
+    // Add default categories first
+    defaultCategories.forEach(defaultCat => {
+        categoryMap.set(defaultCat.name.toLowerCase(), { ...defaultCat, id: crypto.randomUUID() });
+    });
+    
+    // Then, overwrite with stored categories to respect user's data and IDs
     initialCategories.forEach(cat => {
       categoryMap.set(cat.name.toLowerCase(), cat);
     });
     
-    // Add default categories only if they don't already exist
-    defaultCategories.forEach(defaultCat => {
-      if (!categoryMap.has(defaultCat.name.toLowerCase())) {
-        categoryMap.set(defaultCat.name.toLowerCase(), { ...defaultCat, id: crypto.randomUUID() });
-      }
-    });
-
     setCategories(Array.from(categoryMap.values()));
+
 
     const storedLimit = localStorage.getItem("pennywise_limit");
     if (storedLimit) {
