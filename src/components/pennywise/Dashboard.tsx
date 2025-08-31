@@ -106,8 +106,6 @@ export default function Dashboard() {
   };
   
   const deleteCategory = (id: string) => {
-    const catToDelete = categories.find(c => c.id === id);
-    if (catToDelete?.isDefault) return; // Prevent deleting default categories
     setCategories(prev => prev.filter(c => c.id !== id));
   };
   
