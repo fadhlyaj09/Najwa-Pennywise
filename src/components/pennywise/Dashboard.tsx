@@ -55,12 +55,13 @@ export default function Dashboard() {
 
     const categoryMap = new Map<string, Category>();
 
-    // Add default categories first, with unique IDs
-    defaultCategories.forEach((defaultCat, index) => {
-        categoryMap.set(defaultCat.name.toLowerCase(), { ...defaultCat, id: `default-${index}` });
+    // Add default categories first, giving them a unique ID
+    defaultCategories.forEach((defaultCat) => {
+      // Use a consistent but unique ID format for defaults
+      categoryMap.set(defaultCat.name.toLowerCase(), { ...defaultCat, id: `default-${defaultCat.name.toLowerCase()}` });
     });
     
-    // Then, overwrite with stored categories to respect user's data and IDs
+    // Then, overwrite with stored categories to respect user's data and custom IDs
     storedCategories.forEach(cat => {
       categoryMap.set(cat.name.toLowerCase(), cat);
     });
@@ -87,7 +88,10 @@ export default function Dashboard() {
 
   useEffect(() => {
     if(isClient) {
-      localStorage.setItem("pennywise_categories", JSON.stringify(categories));
+      // Filter out any default categories that might have been added to the state
+      // but shouldn't be persisted if they weren't modified or used.
+      const userDefinedCategories = categories.filter(c => !c.id.startsWith('default-'));
+      localStorage.setItem("pennywise_categories", JSON.stringify(userDefinedCategories));
     }
   }, [categories, isClient]);
 
@@ -189,8 +193,8 @@ export default function Dashboard() {
             spendingLimit={spendingLimit}
             onSetSpendingLimit={setSpendingLimit}
           />
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
+          <div className="grid grid-cols-1 gap-6">
+            <div>
               <TransactionHistory transactions={transactions} />
             </div>
             <div className="space-y-6">

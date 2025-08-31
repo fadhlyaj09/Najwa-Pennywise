@@ -1,53 +1,61 @@
 "use client";
 
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, FormEvent } from 'react';
 import NextLink from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, Terminal } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { login, isAuthenticated } = useAuth();
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/');
-    }
-  }, [isAuthenticated, router]);
+  const { toast } = useToast();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
-    setIsLoading(true);
-    
-    const success = await login(email, password);
-    
-    setIsLoading(false);
-    if (success) {
-      router.push('/');
-    } else {
-      setError('Email atau kata sandi salah. Silakan coba lagi.');
+
+    if (password !== confirmPassword) {
+      setError('Kata sandi tidak cocok.');
+      return;
     }
+
+    setIsLoading(true);
+
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // In a real app, you would handle registration logic here,
+    // like calling an API endpoint.
+    console.log('Registering user:', { email, password });
+
+    setIsLoading(false);
+
+    toast({
+      title: 'Pendaftaran Berhasil!',
+      description: 'Anda sekarang dapat login dengan akun Anda.',
+    });
+
+    router.push('/login');
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
-      <div className="w-full max-w-sm p-4">
+       <div className="w-full max-w-sm p-4">
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Login</CardTitle>
+            <CardTitle className="text-2xl">Daftar Akun Baru</CardTitle>
             <CardDescription>
-              Masukkan email Anda di bawah ini untuk masuk ke akun Anda.
+              Buat akun baru untuk mulai melacak keuangan Anda.
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
@@ -76,10 +84,22 @@ export default function LoginPage() {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="password"
+                  placeholder="••••••••"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="confirm-password">Konfirmasi Password</Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  placeholder="••••••••"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
                   disabled={isLoading}
                 />
               </div>
@@ -87,12 +107,12 @@ export default function LoginPage() {
             <CardFooter className="flex flex-col gap-4">
               <Button className="w-full" type="submit" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Masuk
+                Daftar
               </Button>
-              <div className="text-center text-sm">
-                Belum punya akun?{' '}
-                <NextLink href="/register" className="underline">
-                  Daftar
+               <div className="text-center text-sm">
+                Sudah punya akun?{' '}
+                <NextLink href="/login" className="underline">
+                  Login
                 </NextLink>
               </div>
             </CardFooter>
