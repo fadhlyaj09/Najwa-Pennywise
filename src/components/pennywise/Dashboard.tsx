@@ -35,41 +35,50 @@ const defaultCategories: Omit<Category, 'id' | 'isDefault'>[] = [
 export default function Dashboard() {
   const { logout } = useAuth();
   const router = useRouter();
-  const [transactions, setTransactions] = useState<Transaction[]>(() => {
-    if (typeof window === 'undefined') return [];
-    const storedTransactions = localStorage.getItem("pennywise_transactions");
-    return storedTransactions ? JSON.parse(storedTransactions) : [];
-  });
-  const [categories, setCategories] = useState<Category[]>(() => {
-    if (typeof window === 'undefined') return [];
-    const initialDefaultCategories: Category[] = defaultCategories.map(cat => ({
-      ...cat,
-      id: `default-${cat.name.toLowerCase().replace(/\s+/g, '-')}`,
-      isDefault: true,
-    }));
-    const storedCategoriesString = localStorage.getItem("pennywise_categories");
-    const userCategories = storedCategoriesString ? JSON.parse(storedCategoriesString).map((c: any) => ({...c, isDefault: false})) : [];
-    const combined = [...userCategories, ...initialDefaultCategories];
-    return combined.filter((category, index, self) =>
-      index === self.findIndex((c) => (
-        c.name.toLowerCase() === category.name.toLowerCase() && c.type === category.type
-      ))
-    );
-  });
-  const [spendingLimit, setSpendingLimit] = useState<number>(() => {
-    if (typeof window === 'undefined') return 5000000;
-    const storedLimit = localStorage.getItem("pennywise_limit");
-    return storedLimit ? JSON.parse(storedLimit) : 5000000;
-  });
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [spendingLimit, setSpendingLimit] = useState<number>(5000000);
+  const [isLoaded, setIsLoaded] = useState(false);
   const { toast } = useToast();
-  
-  // This effect hook handles SAVING data to localStorage.
+
   useEffect(() => {
-    localStorage.setItem("pennywise_transactions", JSON.stringify(transactions));
-    const userDefinedCategories = categories.filter(c => !c.isDefault);
-    localStorage.setItem("pennywise_categories", JSON.stringify(userDefinedCategories));
-    localStorage.setItem("pennywise_limit", JSON.stringify(spendingLimit));
-  }, [transactions, categories, spendingLimit]);
+    if (typeof window !== 'undefined') {
+        const storedTransactions = localStorage.getItem("pennywise_transactions");
+        if (storedTransactions) {
+            setTransactions(JSON.parse(storedTransactions));
+        }
+
+        const initialDefaultCategories: Category[] = defaultCategories.map(cat => ({
+            ...cat,
+            id: `default-${cat.name.toLowerCase().replace(/\s+/g, '-')}`,
+            isDefault: true,
+        }));
+        const storedCategoriesString = localStorage.getItem("pennywise_categories");
+        const userCategories = storedCategoriesString ? JSON.parse(storedCategoriesString).map((c: any) => ({...c, isDefault: false})) : [];
+        const combined = [...userCategories, ...initialDefaultCategories];
+         const uniqueCategories = combined.filter((category, index, self) =>
+            index === self.findIndex((c) => (
+                c.name.toLowerCase() === category.name.toLowerCase() && c.type === category.type
+            ))
+        );
+        setCategories(uniqueCategories);
+        
+        const storedLimit = localStorage.getItem("pennywise_limit");
+        if (storedLimit) {
+            setSpendingLimit(JSON.parse(storedLimit));
+        }
+        setIsLoaded(true);
+    }
+  }, []);
+  
+  useEffect(() => {
+    if (isLoaded) {
+        localStorage.setItem("pennywise_transactions", JSON.stringify(transactions));
+        const userDefinedCategories = categories.filter(c => !c.isDefault);
+        localStorage.setItem("pennywise_categories", JSON.stringify(userDefinedCategories));
+        localStorage.setItem("pennywise_limit", JSON.stringify(spendingLimit));
+    }
+  }, [transactions, categories, spendingLimit, isLoaded]);
 
   const addTransaction = (transaction: Omit<Transaction, "id">) => {
     const categoryExists = categories.some(c => c.name.toLowerCase() === transaction.category.toLowerCase() && c.type === transaction.type);
@@ -158,7 +167,8 @@ export default function Dashboard() {
         <div className="container flex h-16 items-center justify-between">
           <NextLink href="/" passHref>
             <h1 className="text-xl md:text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent text-transparent bg-clip-text cursor-pointer pl-2 md:pl-0">
-              Najwa<span className="hidden md:inline"> Pennywise</span>
+              <span className="md:hidden">Najwa</span>
+              <span className="hidden md:inline">Najwa Pennywise</span>
             </h1>
           </NextLink>
           <div className="flex items-center gap-2">
@@ -243,7 +253,7 @@ export default function Dashboard() {
         </div>
       </header>
       
-      <main className="flex-1 container py-6 px-4 md:px-6">
+      <main className="flex-1 container py-6 px-6 md:px-8">
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <div className="lg:col-span-1 flex flex-col gap-6">
              <SummaryCards 
