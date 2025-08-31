@@ -35,76 +35,41 @@ const defaultCategories: Omit<Category, 'id' | 'isDefault'>[] = [
 export default function Dashboard() {
   const { logout } = useAuth();
   const router = useRouter();
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [spendingLimit, setSpendingLimit] = useState<number>(5000000);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    // Load transactions
+  const [transactions, setTransactions] = useState<Transaction[]>(() => {
+    if (typeof window === 'undefined') return [];
     const storedTransactions = localStorage.getItem("pennywise_transactions");
-    if (storedTransactions) {
-      try {
-        setTransactions(JSON.parse(storedTransactions));
-      } catch (e) {
-        console.error("Failed to parse transactions from localStorage", e);
-        setTransactions([]);
-      }
-    }
-    
-    // Default categories are the fallback.
+    return storedTransactions ? JSON.parse(storedTransactions) : [];
+  });
+  const [categories, setCategories] = useState<Category[]>(() => {
+    if (typeof window === 'undefined') return [];
     const initialDefaultCategories: Category[] = defaultCategories.map(cat => ({
       ...cat,
       id: `default-${cat.name.toLowerCase().replace(/\s+/g, '-')}`,
       isDefault: true,
     }));
-
-    let userCategories: Category[] = [];
     const storedCategoriesString = localStorage.getItem("pennywise_categories");
-    if (storedCategoriesString) {
-      try {
-        // User-defined categories are NEVER default.
-        userCategories = JSON.parse(storedCategoriesString).map((cat: Category) => ({ ...cat, id: cat.id || crypto.randomUUID(), isDefault: false }));
-      } catch(e) {
-        console.error("Failed to parse categories from localStorage", e);
-        userCategories = [];
-      }
-    }
-    
-    // Combine and remove duplicates, giving preference to user-defined categories if names conflict.
+    const userCategories = storedCategoriesString ? JSON.parse(storedCategoriesString).map((c: any) => ({...c, isDefault: false})) : [];
     const combined = [...userCategories, ...initialDefaultCategories];
-    const uniqueCategories = combined.filter((category, index, self) =>
+    return combined.filter((category, index, self) =>
       index === self.findIndex((c) => (
         c.name.toLowerCase() === category.name.toLowerCase() && c.type === category.type
       ))
     );
-
-    setCategories(uniqueCategories);
-
-    // Load spending limit
+  });
+  const [spendingLimit, setSpendingLimit] = useState<number>(() => {
+    if (typeof window === 'undefined') return 5000000;
     const storedLimit = localStorage.getItem("pennywise_limit");
-    if (storedLimit) {
-      try {
-        setSpendingLimit(JSON.parse(storedLimit));
-      } catch(e) {
-        console.error("Failed to parse spending limit from localStorage", e);
-        setSpendingLimit(5000000);
-      }
-    }
-  }, []);
-
+    return storedLimit ? JSON.parse(storedLimit) : 5000000;
+  });
+  const { toast } = useToast();
+  
+  // This effect hook handles SAVING data to localStorage.
   useEffect(() => {
     localStorage.setItem("pennywise_transactions", JSON.stringify(transactions));
-  }, [transactions]);
-
-  useEffect(() => {
     const userDefinedCategories = categories.filter(c => !c.isDefault);
     localStorage.setItem("pennywise_categories", JSON.stringify(userDefinedCategories));
-  }, [categories]);
-
-  useEffect(() => {
     localStorage.setItem("pennywise_limit", JSON.stringify(spendingLimit));
-  }, [spendingLimit]);
+  }, [transactions, categories, spendingLimit]);
 
   const addTransaction = (transaction: Omit<Transaction, "id">) => {
     const categoryExists = categories.some(c => c.name.toLowerCase() === transaction.category.toLowerCase() && c.type === transaction.type);
@@ -125,14 +90,15 @@ export default function Dashboard() {
        })
        return; 
     }
-    // New categories added by user are never default.
     const newCategory: Category = { ...category, id: crypto.randomUUID(), isDefault: false };
     setCategories(prev => [...prev, newCategory]);
   };
   
   const deleteCategory = (id: string) => {
     const categoryToDelete = categories.find(c => c.id === id);
-    if (!categoryToDelete || categoryToDelete.isDefault) {
+    if (!categoryToDelete) return;
+
+    if (categoryToDelete.isDefault) {
       toast({
         variant: "destructive",
         title: "Cannot delete category",
@@ -141,7 +107,7 @@ export default function Dashboard() {
       return;
     };
 
-    const isCategoryInUse = transactions.some(t => t.category.toLowerCase() === categoryToDelete.name.toLowerCase());
+    const isCategoryInUse = transactions.some(t => t.category.toLowerCase() === categoryToDelete.name.toLowerCase() && t.type === categoryToDelete.type);
     
     if (isCategoryInUse) {
         toast({
