@@ -19,7 +19,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 
-const defaultCategories: Omit<Category, 'id' | 'isDefault'>[] = [
+const defaultCategories: Omit<Category, 'id'>[] = [
     { name: 'Salary', icon: 'Landmark', type: 'income' },
     { name: 'Breakfast', icon: 'Coffee', type: 'expense' },
     { name: 'Lunch', icon: 'Utensils', type: 'expense' },
@@ -41,40 +41,46 @@ export default function Dashboard() {
   const [isLoaded, setIsLoaded] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
+   useEffect(() => {
     if (typeof window !== 'undefined') {
-        const storedTransactions = localStorage.getItem("pennywise_transactions");
-        if (storedTransactions) {
-            setTransactions(JSON.parse(storedTransactions));
+      const storedTransactions = localStorage.getItem("pennywise_transactions");
+      if (storedTransactions) {
+        try {
+          setTransactions(JSON.parse(storedTransactions));
+        } catch (e) {
+          console.error("Failed to parse transactions:", e);
+          setTransactions([]);
         }
+      }
 
-        const initialDefaultCategories: Category[] = defaultCategories.map(cat => ({
-            ...cat,
-            id: `default-${cat.name.toLowerCase().replace(/\s+/g, '-')}`,
-            isDefault: true,
-        }));
-        
-        const storedCategoriesString = localStorage.getItem("pennywise_categories");
-        const userCategories: Category[] = storedCategoriesString 
-            ? JSON.parse(storedCategoriesString).map((c: any) => ({...c, id: c.id || crypto.randomUUID(), isDefault: false})) 
-            : [];
+      const initialDefaultCategories: Category[] = defaultCategories.map(cat => ({
+        ...cat,
+        id: `default-${cat.name.toLowerCase().replace(/\s+/g, '-')}`,
+        isDefault: true,
+      }));
 
-        const combined = [...userCategories, ...initialDefaultCategories];
-         const uniqueCategories = combined.filter((category, index, self) =>
-            index === self.findIndex((c) => (
-                c.name.toLowerCase() === category.name.toLowerCase() && c.type === category.type
-            ))
-        );
-        setCategories(uniqueCategories);
-        
-        const storedLimit = localStorage.getItem("pennywise_limit");
-        if (storedLimit) {
-            setSpendingLimit(JSON.parse(storedLimit));
-        }
-        setIsLoaded(true);
+      const storedCategoriesString = localStorage.getItem("pennywise_categories");
+      const userCategories: Category[] = storedCategoriesString 
+        ? JSON.parse(storedCategoriesString).map((c: any) => ({...c, isDefault: false}))
+        : [];
+
+      const combined = [...userCategories, ...initialDefaultCategories];
+      const uniqueCategories = combined.filter((category, index, self) =>
+        index === self.findIndex((c) => (
+          c.name.toLowerCase() === category.name.toLowerCase() && c.type === category.type
+        ))
+      );
+      setCategories(uniqueCategories);
+      
+      const storedLimit = localStorage.getItem("pennywise_limit");
+      if (storedLimit) {
+        setSpendingLimit(JSON.parse(storedLimit));
+      }
+      
+      setIsLoaded(true);
     }
   }, []);
-  
+
   useEffect(() => {
     if (isLoaded) {
         localStorage.setItem("pennywise_transactions", JSON.stringify(transactions));
@@ -257,7 +263,7 @@ export default function Dashboard() {
         </div>
       </header>
       
-      <main className="flex-1 container py-6 px-4 md:px-8">
+      <main className="flex-1 container py-6 px-4">
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="lg:col-span-2 grid gap-6">
              <SummaryCards 
