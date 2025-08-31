@@ -65,7 +65,7 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
       <Card>
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-medium">Spending Limit</CardTitle>
+            <CardTitle className="text-sm font-medium">Monthly Spending Limit</CardTitle>
              {isEditingLimit ? (
                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleLimitSave}>
                   <Check className="h-4 w-4" />
