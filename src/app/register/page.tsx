@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, Terminal } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { registerUser } from '@/lib/auth';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
@@ -29,23 +30,26 @@ export default function RegisterPage() {
       return;
     }
 
+    if(password.length < 6) {
+      setError('Kata sandi harus terdiri dari minimal 6 karakter.');
+      return;
+    }
+
     setIsLoading(true);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // In a real app, you would handle registration logic here,
-    // like calling an API endpoint.
-    console.log('Registering user:', { email, password });
+    const result = await registerUser(email, password);
 
     setIsLoading(false);
 
-    toast({
-      title: 'Pendaftaran Berhasil!',
-      description: 'Anda sekarang dapat login dengan akun Anda.',
-    });
-
-    router.push('/login');
+    if (result.success) {
+        toast({
+            title: 'Pendaftaran Berhasil!',
+            description: 'Anda sekarang dapat login dengan akun Anda.',
+        });
+        router.push('/login');
+    } else {
+        setError(result.message);
+    }
   };
 
   return (
