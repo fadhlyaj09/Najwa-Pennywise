@@ -6,13 +6,19 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Transaction } from "@/lib/types";
 import { format, parseISO } from "date-fns";
-import { type LucideIcon, ShoppingCart, Home, Car, Landmark, Wallet } from 'lucide-react';
+import { type LucideIcon, ShoppingCart, Home, Car, Landmark, Wallet, Utensils, Coffee, UtensilsCrossed, Cookie, ShoppingBag, Users } from 'lucide-react';
 
 const categoryIcons: { [key: string]: LucideIcon } = {
     'Groceries': ShoppingCart,
     'Rent': Home,
     'Transport': Car,
     'Salary': Landmark,
+    'Breakfast': Coffee,
+    'Lunch': Utensils,
+    'Dinner': UtensilsCrossed,
+    'Snacks': Cookie,
+    'Monthly Shopping': ShoppingBag,
+    'Hanging Out': Users,
     'Default': Wallet,
 };
 

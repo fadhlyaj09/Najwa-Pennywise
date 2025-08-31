@@ -14,9 +14,14 @@ import CategoryManager from "@/components/pennywise/CategoryManager";
 
 const defaultCategories: Category[] = [
   { id: 'cat1', name: 'Salary', icon: 'Landmark' },
-  { id: 'cat2', name: 'Groceries', icon: 'ShoppingCart' },
-  { id: 'cat3', name: 'Rent', icon: 'Home' },
-  { id: 'cat4', name: 'Transport', icon: 'Car' },
+  { id: 'cat2', name: 'Breakfast', icon: 'Coffee' },
+  { id: 'cat3', name: 'Lunch', icon: 'Utensils' },
+  { id: 'cat4', name: 'Dinner', icon: 'UtensilsCrossed' },
+  { id: 'cat5', name: 'Snacks', icon: 'Cookie' },
+  { id: 'cat6', name: 'Monthly Shopping', icon: 'ShoppingBag' },
+  { id: 'cat7', name: 'Hanging Out', icon: 'Users' },
+  { id: 'cat8', name: 'Transport', icon: 'Car' },
+  { id: 'cat9', name: 'Rent', icon: 'Home' },
 ];
 
 export default function Dashboard() {
@@ -33,7 +38,13 @@ export default function Dashboard() {
     }
     const storedCategories = localStorage.getItem("pennywise_categories");
     if (storedCategories) {
-      setCategories(JSON.parse(storedCategories));
+      const parsedCategories = JSON.parse(storedCategories);
+      // Simple check to see if we should reset to new default categories
+      if (parsedCategories.length < 5) {
+        setCategories(defaultCategories);
+      } else {
+        setCategories(parsedCategories);
+      }
     } else {
        setCategories(defaultCategories);
     }
