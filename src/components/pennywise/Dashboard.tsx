@@ -21,7 +21,6 @@ const defaultCategories: Category[] = [
   { id: 'cat6', name: 'Monthly Shopping', icon: 'ShoppingBag' },
   { id: 'cat7', name: 'Hanging Out', icon: 'Users' },
   { id: 'cat8', name: 'Transport', icon: 'Car' },
-  { id: 'cat9', name: 'Rent', icon: 'Home' },
 ];
 
 export default function Dashboard() {
