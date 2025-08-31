@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo, type ReactNode } from "react";
@@ -47,7 +48,7 @@ export default function Dashboard() {
     }
     
     // Load categories
-    const initialCategories: Category[] = defaultCategories.map(cat => ({
+    const initialDefaultCategories: Category[] = defaultCategories.map(cat => ({
         ...cat,
         id: `default-${cat.name.toLowerCase().replace(/\s+/g, '-')}`,
         isDefault: true,
@@ -58,7 +59,7 @@ export default function Dashboard() {
         ? JSON.parse(storedCategoriesString).map((cat: Omit<Category, 'isDefault'>) => ({...cat, isDefault: false}))
         : [];
 
-    setCategories([...initialCategories, ...userCategories]);
+    setCategories([...initialDefaultCategories, ...userCategories]);
 
 
     // Load spending limit
@@ -200,8 +201,8 @@ export default function Dashboard() {
       </header>
       
       <main className="flex-1 container py-6">
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2 flex flex-col gap-6">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="lg:col-span-1 flex flex-col gap-6">
              <SummaryCards 
               income={income}
               expenses={expenses}
@@ -209,7 +210,9 @@ export default function Dashboard() {
               spendingLimit={spendingLimit}
               onSetSpendingLimit={setSpendingLimit}
             />
-             <TransactionHistory transactions={transactions} />
+          </div>
+          <div className="lg:col-span-1 flex flex-col gap-6">
+            <TransactionHistory transactions={transactions} />
           </div>
           <div className="lg:col-span-1 flex flex-col gap-6">
             <WeeklyChart transactions={transactions} />
@@ -220,3 +223,5 @@ export default function Dashboard() {
     </div>
   );
 }
+
+    
