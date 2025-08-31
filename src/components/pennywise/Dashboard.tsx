@@ -11,6 +11,7 @@ import AiReport from "@/components/pennywise/AiReport";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import TransactionForm from "@/components/pennywise/TransactionForm";
 import CategoryManager from "@/components/pennywise/CategoryManager";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 const defaultCategories: Category[] = [
   { id: 'cat1', name: 'Salary', icon: 'Landmark' },
@@ -34,23 +35,43 @@ export default function Dashboard() {
     setIsClient(true);
     const storedTransactions = localStorage.getItem("pennywise_transactions");
     if (storedTransactions) {
-      setTransactions(JSON.parse(storedTransactions));
+      try {
+        setTransactions(JSON.parse(storedTransactions));
+      } catch (e) {
+        console.error("Failed to parse transactions from localStorage", e);
+        setTransactions([]);
+      }
     }
+    
     const storedCategories = localStorage.getItem("pennywise_categories");
     if (storedCategories) {
-      const parsedCategories = JSON.parse(storedCategories);
-      // Simple check to see if we should reset to new default categories
-      if (parsedCategories.length < 5) {
+      try {
+        const parsedCategories = JSON.parse(storedCategories);
+        // Merge stored categories with default categories, avoiding duplicates
+        const categoryNames = new Set(parsedCategories.map((c: Category) => c.name));
+        const mergedCategories = [...parsedCategories];
+        defaultCategories.forEach(dc => {
+          if (!categoryNames.has(dc.name)) {
+            mergedCategories.push(dc);
+          }
+        });
+        setCategories(mergedCategories);
+      } catch (e) {
+        console.error("Failed to parse categories from localStorage", e);
         setCategories(defaultCategories);
-      } else {
-        setCategories(parsedCategories);
       }
     } else {
        setCategories(defaultCategories);
     }
+
     const storedLimit = localStorage.getItem("pennywise_limit");
     if (storedLimit) {
-      setSpendingLimit(JSON.parse(storedLimit));
+      try {
+        setSpendingLimit(JSON.parse(storedLimit));
+      } catch(e) {
+        console.error("Failed to parse spending limit from localStorage", e);
+        setSpendingLimit(5000000);
+      }
     }
   }, []);
 
@@ -96,6 +117,9 @@ export default function Dashboard() {
   const [transactionFormOpen, setTransactionFormOpen] = useState(false);
   const [categoryManagerOpen, setCategoryManagerOpen] = useState(false);
 
+  const incomeCategories = categories.filter(c => c.name === 'Salary');
+  const expenseCategories = categories.filter(c => c.name !== 'Salary');
+
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -103,19 +127,19 @@ export default function Dashboard() {
         <div className="container flex h-16 items-center justify-between">
           <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent text-transparent bg-clip-text">Pennywise</h1>
           <div className="flex items-center gap-2">
-            <Dialog open={categoryManagerOpen} onOpenChange={setCategoryManagerOpen}>
-              <DialogTrigger asChild>
+            <Sheet open={categoryManagerOpen} onOpenChange={setCategoryManagerOpen}>
+              <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" aria-label="Manage Categories">
                   <Tags className="h-5 w-5" />
                 </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Manage Categories</DialogTitle>
-                </DialogHeader>
+              </SheetTrigger>
+              <SheetContent>
+                <SheetHeader>
+                  <SheetTitle>Manage Categories</SheetTitle>
+                </SheetHeader>
                 <CategoryManager categories={categories} onAddCategory={addCategory} />
-              </DialogContent>
-            </Dialog>
+              </SheetContent>
+            </Sheet>
 
             <Dialog open={transactionFormOpen} onOpenChange={setTransactionFormOpen}>
               <DialogTrigger asChild>
@@ -130,7 +154,8 @@ export default function Dashboard() {
                    <DialogDescription>Enter the details of your income or expense.</DialogDescription>
                  </DialogHeader>
                  <TransactionForm
-                   categories={categories}
+                   incomeCategories={incomeCategories}
+                   expenseCategories={expenseCategories}
                    onAddTransaction={(t) => {
                      addTransaction(t);
                      setTransactionFormOpen(false);

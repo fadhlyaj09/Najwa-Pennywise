@@ -1,6 +1,6 @@
 "use client"
 
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -33,11 +33,12 @@ const formSchema = z.object({
 });
 
 interface TransactionFormProps {
-  categories: Category[];
+  incomeCategories: Category[];
+  expenseCategories: Category[];
   onAddTransaction: (transaction: Omit<Transaction, 'id'>) => void;
 }
 
-export default function TransactionForm({ categories, onAddTransaction }: TransactionFormProps) {
+export default function TransactionForm({ incomeCategories, expenseCategories, onAddTransaction }: TransactionFormProps) {
   const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -49,13 +50,21 @@ export default function TransactionForm({ categories, onAddTransaction }: Transa
     },
   });
 
+  const transactionType = useWatch({
+    control: form.control,
+    name: "type",
+  });
+
   function onSubmit(values: z.infer<typeof formSchema>) {
     onAddTransaction(values);
     toast({
       title: "Success!",
       description: "Your transaction has been added.",
     });
+    form.reset();
   }
+  
+  const categories = transactionType === 'income' ? incomeCategories : expenseCategories;
 
   return (
     <Form {...form}>
@@ -68,7 +77,10 @@ export default function TransactionForm({ categories, onAddTransaction }: Transa
               <FormLabel>Transaction Type</FormLabel>
               <FormControl>
                 <RadioGroup
-                  onValueChange={field.onChange}
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    form.setValue('category', ''); // Reset category on type change
+                  }}
                   defaultValue={field.value}
                   className="flex space-x-4"
                 >
@@ -114,7 +126,7 @@ export default function TransactionForm({ categories, onAddTransaction }: Transa
           render={({ field }) => (
             <FormItem>
               <FormLabel>Category</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a category" />

@@ -32,7 +32,7 @@ export default function CategoryManager({ categories, onAddCategory }: CategoryM
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pt-4">
       <div>
         <h4 className="text-sm font-medium mb-2">Existing Categories</h4>
         <ScrollArea className="h-40">
