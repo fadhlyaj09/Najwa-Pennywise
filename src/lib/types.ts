@@ -13,3 +13,12 @@ export interface Category {
   type: 'income' | 'expense';
   isDefault?: boolean;
 }
+
+export interface Debt {
+  id: string;
+  debtorName: string;
+  amount: number;
+  description: string;
+  dueDate: string;
+  status: 'paid' | 'unpaid';
+}

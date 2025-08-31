@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo, type ReactNode } from "react";
-import { PlusCircle, Tags, LogOut } from "lucide-react";
+import NextLink from 'next/link';
+import { PlusCircle, Tags, LogOut, BookUser } from "lucide-react";
 import type { Transaction, Category } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import SummaryCards from "@/components/pennywise/SummaryCards";
@@ -32,15 +33,8 @@ export default function Dashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [spendingLimit, setSpendingLimit] = useState<number>(5000000);
-  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  useEffect(() => {
-    if (!isClient) return;
-
     // Load transactions
     const storedTransactions = localStorage.getItem("pennywise_transactions");
     if (storedTransactions) {
@@ -53,37 +47,23 @@ export default function Dashboard() {
     }
     
     // Load categories
-    let storedCategories: Category[] = [];
-    try {
-        const storedCategoriesString = localStorage.getItem("pennywise_categories");
-        if(storedCategoriesString) {
-            storedCategories = JSON.parse(storedCategoriesString);
-        }
-    } catch(e) {
-        console.error("Failed to parse categories from localStorage", e);
-        storedCategories = [];
-    }
+    const storedCategoriesString = localStorage.getItem("pennywise_categories");
+    const userCategories = storedCategoriesString ? JSON.parse(storedCategoriesString) : [];
 
-    const initialCategories: Category[] = [];
-
-    // Add default categories
-    defaultCategories.forEach((cat) => {
-        initialCategories.push({
-            ...cat,
-            id: `default-${cat.name.toLowerCase().replace(/\s+/g, '-')}`,
-            isDefault: true,
-        });
-    });
-
-    // Add stored user categories, ensuring they are not marked as default
-    storedCategories.forEach(cat => {
-        // Prevent adding duplicates if a user category somehow has the same ID as a default one
-        if (!initialCategories.some(c => c.id === cat.id)) {
-            initialCategories.push({ ...cat, isDefault: false });
+    const initialCategories: Category[] = defaultCategories.map(cat => ({
+      ...cat,
+      id: `default-${cat.name.toLowerCase().replace(/\s+/g, '-')}`,
+      isDefault: true,
+    }));
+    
+    const combinedCategories = [...initialCategories];
+    userCategories.forEach((cat: Omit<Category, 'isDefault'>) => {
+        if (!combinedCategories.some(c => c.id === cat.id)) {
+            combinedCategories.push({ ...cat, id: cat.id || crypto.randomUUID(), isDefault: false });
         }
     });
 
-    setCategories(initialCategories);
+    setCategories(combinedCategories);
 
     // Load spending limit
     const storedLimit = localStorage.getItem("pennywise_limit");
@@ -95,26 +75,20 @@ export default function Dashboard() {
         setSpendingLimit(5000000);
       }
     }
-  }, [isClient]);
+  }, []);
 
   useEffect(() => {
-    if(isClient) {
-      localStorage.setItem("pennywise_transactions", JSON.stringify(transactions));
-    }
-  }, [transactions, isClient]);
+    localStorage.setItem("pennywise_transactions", JSON.stringify(transactions));
+  }, [transactions]);
 
   useEffect(() => {
-    if(isClient) {
-      const userDefinedCategories = categories.filter(c => !c.isDefault);
-      localStorage.setItem("pennywise_categories", JSON.stringify(userDefinedCategories));
-    }
-  }, [categories, isClient]);
+    const userDefinedCategories = categories.filter(c => !c.isDefault);
+    localStorage.setItem("pennywise_categories", JSON.stringify(userDefinedCategories));
+  }, [categories]);
 
   useEffect(() => {
-    if(isClient) {
-      localStorage.setItem("pennywise_limit", JSON.stringify(spendingLimit));
-    }
-  }, [spendingLimit, isClient]);
+    localStorage.setItem("pennywise_limit", JSON.stringify(spendingLimit));
+  }, [spendingLimit]);
 
   const addTransaction = (transaction: Omit<Transaction, "id">) => {
     const categoryExists = categories.some(c => c.name.toLowerCase() === transaction.category.toLowerCase() && c.type === transaction.type);
@@ -138,8 +112,6 @@ export default function Dashboard() {
     const catToDelete = categories.find(c => c.id === id);
     if (catToDelete?.isDefault) return; // Prevent deleting default categories
     setCategories(prev => prev.filter(c => c.id !== id));
-    // Optional: Also delete transactions associated with this category
-    // setTransactions(prev => prev.filter(t => t.category.toLowerCase() !== catToDelete?.name.toLowerCase()));
   };
   
   const { income, expenses, balance } = useMemo(() => {
@@ -173,15 +145,23 @@ export default function Dashboard() {
     <div className="flex flex-col min-h-screen bg-background">
       <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent text-transparent bg-clip-text">Najwa Pennywise</h1>
+          <NextLink href="/" passHref>
+            <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent text-transparent bg-clip-text cursor-pointer">Najwa Pennywise</h1>
+          </NextLink>
           <div className="flex items-center gap-2">
+            <NextLink href="/debt" passHref>
+               <Button variant="ghost" size="icon" aria-label="Manage Debt">
+                  <BookUser className="h-5 w-5" />
+                </Button>
+            </NextLink>
+
             <Sheet open={categoryManagerOpen} onOpenChange={setCategoryManagerOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" aria-label="Manage Categories">
                   <Tags className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent className="flex flex-col p-0">
+              <SheetContent className="flex flex-col">
                 <SheetHeader className="p-4 border-b">
                   <SheetTitle>Manage Categories</SheetTitle>
                 </SheetHeader>
@@ -225,17 +205,19 @@ export default function Dashboard() {
       
       <main className="flex-1 container py-6">
         <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-6">
-            <SummaryCards 
+          <div className="lg:col-span-1 flex flex-col gap-6">
+             <SummaryCards 
               income={income}
               expenses={expenses}
               balance={balance}
               spendingLimit={spendingLimit}
               onSetSpendingLimit={setSpendingLimit}
             />
+          </div>
+          <div className="lg:col-span-1 flex flex-col gap-6">
             <TransactionHistory transactions={transactions} />
           </div>
-          <div className="lg:col-span-1 space-y-6">
+          <div className="lg:col-span-1 flex flex-col gap-6">
             <WeeklyChart transactions={transactions} />
             <AiReport transactions={transactions} spendingLimit={spendingLimit} income={income} expenses={expenses} />
           </div>
