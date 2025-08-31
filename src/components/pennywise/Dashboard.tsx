@@ -64,7 +64,7 @@ export default function Dashboard() {
     if (storedCategoriesString) {
       try {
         // User-defined categories are NEVER default.
-        userCategories = JSON.parse(storedCategoriesString).map((cat: Omit<Category, 'isDefault'>) => ({ ...cat, id: cat.id || crypto.randomUUID(), isDefault: false }));
+        userCategories = JSON.parse(storedCategoriesString).map((cat: Category) => ({ ...cat, id: cat.id || crypto.randomUUID(), isDefault: false }));
       } catch(e) {
         console.error("Failed to parse categories from localStorage", e);
         userCategories = [];
@@ -277,7 +277,7 @@ export default function Dashboard() {
         </div>
       </header>
       
-      <main className="flex-1 container py-6">
+      <main className="flex-1 container py-6 px-4 md:px-6">
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <div className="lg:col-span-1 flex flex-col gap-6">
              <SummaryCards 
