@@ -13,13 +13,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { Category, Transaction } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
@@ -27,6 +20,7 @@ import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ChevronsUpDown } from "lucide-react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import React from "react";
 
@@ -169,25 +163,27 @@ export default function TransactionForm({ incomeCategories, expenseCategories, o
                       }}
                     />
                     <CommandList>
-                      <CommandEmpty>
-                        {
-                          field.value ? `Create new category: "${field.value}"` : "No category found."
-                        }
-                      </CommandEmpty>
-                      <CommandGroup>
-                        {categories.map((cat) => (
-                          <CommandItem
-                            value={cat.name}
-                            key={cat.id}
-                            onSelect={() => {
-                              form.setValue("category", cat.name)
-                              setOpen(false)
-                            }}
-                          >
-                            {cat.name}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
+                      <ScrollArea className="h-48">
+                        <CommandEmpty>
+                          {
+                            field.value ? `Create new category: "${field.value}"` : "No category found."
+                          }
+                        </CommandEmpty>
+                        <CommandGroup>
+                          {categories.map((cat) => (
+                            <CommandItem
+                              value={cat.name}
+                              key={cat.id}
+                              onSelect={() => {
+                                form.setValue("category", cat.name)
+                                setOpen(false)
+                              }}
+                            >
+                              {cat.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </ScrollArea>
                     </CommandList>
                   </Command>
                 </PopoverContent>
