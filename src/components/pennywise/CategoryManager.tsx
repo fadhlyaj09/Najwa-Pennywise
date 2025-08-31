@@ -10,6 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Category } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { X } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(2, "Category name must be at least 2 characters."),
@@ -17,21 +18,21 @@ const formSchema = z.object({
 
 interface CategoryManagerProps {
   categories: Category[];
-  onAddCategory: (category: Omit<Category, 'id'>) => void;
+  onAddCategory: (category: Omit<Category, 'id' | 'isDefault'>) => void;
+  onDeleteCategory: (id: string) => void;
 }
 
-export default function CategoryManager({ categories, onAddCategory }: CategoryManagerProps) {
+export default function CategoryManager({ categories, onAddCategory, onDeleteCategory }: CategoryManagerProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: { name: "" },
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    onAddCategory({ name: values.name, icon: 'Tag' }); // Default icon
+    onAddCategory({ name: values.name, icon: 'Tag' });
     form.reset();
   }
 
-  // Sort categories alphabetically, but keep "Salary" at the top
   const sortedCategories = [...categories].sort((a, b) => {
       if (a.name === 'Salary') return -1;
       if (b.name === 'Salary') return 1;
@@ -40,7 +41,7 @@ export default function CategoryManager({ categories, onAddCategory }: CategoryM
 
   return (
     <div className="flex flex-col h-full">
-        <div className="mb-4">
+        <div className="p-4">
             <h4 className="text-sm font-medium mb-2">Add New Category</h4>
             <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-start gap-2">
@@ -61,17 +62,28 @@ export default function CategoryManager({ categories, onAddCategory }: CategoryM
             </Form>
         </div>
 
-        <Separator className="mb-4" />
+        <Separator />
         
-        <div className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0 p-4">
             <h4 className="text-sm font-medium mb-2">Existing Categories</h4>
-            <ScrollArea className="h-full pr-4">
+            <ScrollArea className="h-full pr-2">
                 <div className="flex flex-wrap gap-2 pb-4">
                     {sortedCategories.map((cat) => (
-                    <Badge key={cat.id} variant="secondary">{cat.name}</Badge>
+                      <Badge key={cat.id} variant="secondary" className="group relative pr-7">
+                        {cat.name}
+                        {!cat.isDefault && (
+                           <button
+                            onClick={() => onDeleteCategory(cat.id)}
+                            className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full p-0.5 bg-muted-foreground/20 text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground"
+                           >
+                               <X className="h-3 w-3" />
+                               <span className="sr-only">Delete {cat.name}</span>
+                           </button>
+                        )}
+                      </Badge>
                     ))}
                     {sortedCategories.length === 0 && (
-                    <p className="text-sm text-muted-foreground w-full text-center py-4">No categories added yet.</p>
+                      <p className="text-sm text-muted-foreground w-full text-center py-4">No categories added yet.</p>
                     )}
                 </div>
             </ScrollArea>

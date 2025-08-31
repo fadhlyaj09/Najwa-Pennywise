@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, type ReactNode } from "react";
-import { PlusCircle, Tags, LogOut } from "lucide-react";
+import { PlusCircle, Tags, LogOut, Trash2 } from "lucide-react";
 import type { Transaction, Category } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import SummaryCards from "@/components/pennywise/SummaryCards";
@@ -14,7 +14,7 @@ import CategoryManager from "@/components/pennywise/CategoryManager";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/use-auth";
 
-const defaultCategories: Omit<Category, 'id'>[] = [
+const defaultCategories: Omit<Category, 'id' | 'isDefault'>[] = [
   { name: 'Salary', icon: 'Landmark' },
   { name: 'Breakfast', icon: 'Coffee' },
   { name: 'Lunch', icon: 'Utensils' },
@@ -57,14 +57,15 @@ export default function Dashboard() {
 
     const categoryMap = new Map<string, Category>();
 
-    // Add default categories with unique IDs
-    defaultCategories.forEach((defaultCat) => {
-      categoryMap.set(defaultCat.name.toLowerCase(), { ...defaultCat, id: `default-${defaultCat.name.toLowerCase()}` });
+    // Add default categories first
+    defaultCategories.forEach((defaultCat, index) => {
+        const id = `default-${index}`;
+        categoryMap.set(defaultCat.name.toLowerCase(), { ...defaultCat, id, isDefault: true });
     });
     
-    // Add/overwrite with user-stored categories
+    // Then, add user-stored categories, which will overwrite defaults if names match
     storedCategories.forEach(cat => {
-      categoryMap.set(cat.name.toLowerCase(), cat); // User's category (with its own id) overwrites default
+        categoryMap.set(cat.name.toLowerCase(), { ...cat, isDefault: defaultCategories.some(dc => dc.name.toLowerCase() === cat.name.toLowerCase()) });
     });
     
     setCategories(Array.from(categoryMap.values()));
@@ -90,8 +91,8 @@ export default function Dashboard() {
 
   useEffect(() => {
     if(isClient) {
-      // Filter out the default categories that haven't been "overwritten" by a user-added one with a non-default ID
-      const userDefinedCategories = categories.filter(c => !c.id.startsWith('default-'));
+      // Only store categories that are not the original defaults
+      const userDefinedCategories = categories.filter(c => !c.isDefault || !c.id.startsWith('default-'));
       localStorage.setItem("pennywise_categories", JSON.stringify(userDefinedCategories));
     }
   }, [categories, isClient]);
@@ -112,23 +113,22 @@ export default function Dashboard() {
     setTransactions(prev => [newTransaction, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
   };
 
-  const addCategory = (category: Omit<Category, "id">) => {
-    // Check if a category with the same name already exists (case-insensitive)
+  const addCategory = (category: Omit<Category, "id" | 'isDefault'>) => {
     const existingCategory = categories.find(c => c.name.toLowerCase() === category.name.toLowerCase());
     if (existingCategory) {
-        // If it exists but has a default ID, we can "claim" it by giving it a real ID.
-        // This is not strictly necessary with the current setup but is good practice.
         if (existingCategory.id.startsWith('default-')) {
             setCategories(prev => prev.map(c => 
-                c.id === existingCategory.id ? { ...c, id: crypto.randomUUID() } : c
+                c.id === existingCategory.id ? { ...c, id: crypto.randomUUID(), isDefault: true } : c
             ));
         }
-        // If it exists with a non-default ID, do nothing.
         return;
     }
-    // If it doesn't exist, add it as a new category.
-    const newCategory = { ...category, id: crypto.randomUUID() };
+    const newCategory = { ...category, id: crypto.randomUUID(), isDefault: false };
     setCategories(prev => [...prev, newCategory]);
+  };
+  
+  const deleteCategory = (id: string) => {
+    setCategories(prev => prev.filter(c => c.id !== id));
   };
   
   const { income, expenses, balance } = useMemo(() => {
@@ -170,7 +170,7 @@ export default function Dashboard() {
                 <SheetHeader>
                   <SheetTitle>Manage Categories</SheetTitle>
                 </SheetHeader>
-                <CategoryManager categories={categories} onAddCategory={addCategory} />
+                <CategoryManager categories={categories} onAddCategory={addCategory} onDeleteCategory={deleteCategory} />
               </SheetContent>
             </Sheet>
 
