@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Category } from "@/lib/types";
@@ -43,7 +43,7 @@ export default function CategoryManager({ categories, onAddCategory, onDeleteCat
 
   return (
     <ScrollArea className="h-full">
-      <div className="p-4">
+      <div className="p-4 pt-0">
         <div className="space-y-4">
           <div>
             <h4 className="text-sm font-medium mb-2">Add New Category</h4>

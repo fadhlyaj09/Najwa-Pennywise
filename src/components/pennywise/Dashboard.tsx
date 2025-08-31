@@ -21,6 +21,8 @@ const defaultCategories: Omit<Category, 'id' | 'isDefault'>[] = [
   { name: 'Dinner', icon: 'UtensilsCrossed' },
   { name: 'Snacks', icon: 'Cookie' },
   { name: 'Monthly Shopping', icon: 'ShoppingBag' },
+  { name: 'Hangout', icon: 'Users' },
+  { name: 'Internet Quota', icon: 'Wifi' },
 ];
 
 export default function Dashboard() {
@@ -56,6 +58,7 @@ export default function Dashboard() {
     }
 
     const categoryMap = new Map<string, Category>();
+    const defaultCategoryNames = new Set(defaultCategories.map(dc => dc.name.toLowerCase()));
 
     // Add default categories first
     defaultCategories.forEach((defaultCat, index) => {
@@ -63,9 +66,11 @@ export default function Dashboard() {
         categoryMap.set(defaultCat.name.toLowerCase(), { ...defaultCat, id, isDefault: true });
     });
     
-    // Then, add user-stored categories, which will overwrite defaults if names match
+    // Then, add user-stored categories
     storedCategories.forEach(cat => {
-        categoryMap.set(cat.name.toLowerCase(), { ...cat, isDefault: defaultCategories.some(dc => dc.name.toLowerCase() === cat.name.toLowerCase()) });
+        // A stored category is only a default if its name matches one from the hardcoded list
+        const isDefault = defaultCategoryNames.has(cat.name.toLowerCase());
+        categoryMap.set(cat.name.toLowerCase(), { ...cat, isDefault });
     });
     
     setCategories(Array.from(categoryMap.values()));
@@ -92,7 +97,7 @@ export default function Dashboard() {
   useEffect(() => {
     if(isClient) {
       // Only store categories that are not the original defaults
-      const userDefinedCategories = categories.filter(c => !c.isDefault || !c.id.startsWith('default-'));
+      const userDefinedCategories = categories.filter(c => !c.isDefault);
       localStorage.setItem("pennywise_categories", JSON.stringify(userDefinedCategories));
     }
   }, [categories, isClient]);
@@ -116,12 +121,7 @@ export default function Dashboard() {
   const addCategory = (category: Omit<Category, "id" | 'isDefault'>) => {
     const existingCategory = categories.find(c => c.name.toLowerCase() === category.name.toLowerCase());
     if (existingCategory) {
-        if (existingCategory.id.startsWith('default-')) {
-            setCategories(prev => prev.map(c => 
-                c.id === existingCategory.id ? { ...c, id: crypto.randomUUID(), isDefault: true } : c
-            ));
-        }
-        return;
+       return; // Do nothing if category already exists
     }
     const newCategory = { ...category, id: crypto.randomUUID(), isDefault: false };
     setCategories(prev => [...prev, newCategory]);
