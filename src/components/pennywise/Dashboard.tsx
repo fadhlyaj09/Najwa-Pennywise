@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, type ReactNode } from "react";
-import { PlusCircle, Tags } from "lucide-react";
+import { PlusCircle, Tags, LogOut } from "lucide-react";
 import type { Transaction, Category } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import SummaryCards from "@/components/pennywise/SummaryCards";
@@ -12,6 +12,7 @@ import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, Dialog
 import TransactionForm from "@/components/pennywise/TransactionForm";
 import CategoryManager from "@/components/pennywise/CategoryManager";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { useAuth } from "@/hooks/use-auth";
 
 const defaultCategories: Omit<Category, 'id'>[] = [
   { name: 'Salary', icon: 'Landmark' },
@@ -23,6 +24,7 @@ const defaultCategories: Omit<Category, 'id'>[] = [
 ];
 
 export default function Dashboard() {
+  const { logout } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [spendingLimit, setSpendingLimit] = useState<number>(5000000);
@@ -54,8 +56,8 @@ export default function Dashboard() {
     const categoryMap = new Map<string, Category>();
 
     // Add default categories first, with unique IDs
-    defaultCategories.forEach(defaultCat => {
-        categoryMap.set(defaultCat.name.toLowerCase(), { ...defaultCat, id: `default-${defaultCat.name.toLowerCase()}` });
+    defaultCategories.forEach((defaultCat, index) => {
+        categoryMap.set(defaultCat.name.toLowerCase(), { ...defaultCat, id: `default-${index}` });
     });
     
     // Then, overwrite with stored categories to respect user's data and IDs
@@ -170,6 +172,10 @@ export default function Dashboard() {
                  />
               </DialogContent>
             </Dialog>
+
+            <Button variant="ghost" size="icon" aria-label="Logout" onClick={logout}>
+              <LogOut className="h-5 w-5" />
+            </Button>
           </div>
         </div>
       </header>
