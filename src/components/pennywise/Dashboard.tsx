@@ -22,12 +22,11 @@ const defaultCategories: Category[] = [
   { id: 'cat6', name: 'Monthly Shopping', icon: 'ShoppingBag' },
   { id: 'cat7', name: 'Hanging Out', icon: 'Users' },
   { id: 'cat8', name: 'Transport', icon: 'Car' },
-  { id: 'cat9', name: 'Internet Quota', icon: 'Wifi' },
 ];
 
 export default function Dashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [categories, setCategories] = useState<Category[]>(defaultCategories);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [spendingLimit, setSpendingLimit] = useState<number>(5000000);
   const [isClient, setIsClient] = useState(false);
 
@@ -53,25 +52,21 @@ export default function Dashboard() {
             
             // Add default categories first
             defaultCategories.forEach(cat => {
-              if (cat.name.toLowerCase() !== 'rent') {
-                categoryMap.set(cat.name.toLowerCase(), cat)
-              }
+              categoryMap.set(cat.name.toLowerCase(), cat)
             });
             
             // Add/update with stored categories, giving them priority
             parsedCategories.forEach(cat => {
-              if (cat.name.toLowerCase() !== 'rent') {
-                categoryMap.set(cat.name.toLowerCase(), cat)
-              }
+              categoryMap.set(cat.name.toLowerCase(), cat)
             });
 
             setCategories(Array.from(categoryMap.values()));
         } catch (e) {
             console.error("Failed to parse categories from localStorage", e);
-            setCategories(defaultCategories.filter(c => c.name.toLowerCase() !== 'rent'));
+            setCategories(defaultCategories);
         }
     } else {
-       setCategories(defaultCategories.filter(c => c.name.toLowerCase() !== 'rent'));
+       setCategories(defaultCategories);
     }
 
     const storedLimit = localStorage.getItem("pennywise_limit");
