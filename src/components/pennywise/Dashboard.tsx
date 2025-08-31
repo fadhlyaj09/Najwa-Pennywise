@@ -64,23 +64,26 @@ export default function Dashboard() {
         storedCategories = [];
     }
 
-    const categoryMap = new Map<string, Category>();
-    
-    // Add default categories first, ensuring they have a type
-    defaultCategories.forEach((defaultCat, index) => {
-        const id = `default-${defaultCat.name.toLowerCase().replace(' ', '-')}`;
-        categoryMap.set(defaultCat.name.toLowerCase(), { ...defaultCat, id, isDefault: true });
-    });
-    
-    // Then, add user-stored categories, ensuring they have a type
-    storedCategories.forEach(cat => {
-        const isDefault = defaultCategories.some(dc => dc.name.toLowerCase() === cat.name.toLowerCase());
-        const type = cat.type || 'expense'; 
-        categoryMap.set(cat.name.toLowerCase(), { ...cat, type, isDefault });
-    });
-    
-    setCategories(Array.from(categoryMap.values()));
+    const initialCategories: Category[] = [];
 
+    // Add default categories
+    defaultCategories.forEach((cat) => {
+        initialCategories.push({
+            ...cat,
+            id: `default-${cat.name.toLowerCase().replace(/\s+/g, '-')}`,
+            isDefault: true,
+        });
+    });
+
+    // Add stored user categories, ensuring they are not marked as default
+    storedCategories.forEach(cat => {
+        // Prevent adding duplicates if a user category somehow has the same ID as a default one
+        if (!initialCategories.some(c => c.id === cat.id)) {
+            initialCategories.push({ ...cat, isDefault: false });
+        }
+    });
+
+    setCategories(initialCategories);
 
     // Load spending limit
     const storedLimit = localStorage.getItem("pennywise_limit");
@@ -123,7 +126,7 @@ export default function Dashboard() {
   };
 
   const addCategory = (category: Omit<Category, "id" | 'isDefault'>) => {
-    const existingCategory = categories.find(c => c.name.toLowerCase() === category.name.toLowerCase());
+    const existingCategory = categories.find(c => c.name.toLowerCase() === category.name.toLowerCase() && c.type === category.type);
     if (existingCategory) {
        return; 
     }
@@ -135,6 +138,8 @@ export default function Dashboard() {
     const catToDelete = categories.find(c => c.id === id);
     if (catToDelete?.isDefault) return; // Prevent deleting default categories
     setCategories(prev => prev.filter(c => c.id !== id));
+    // Optional: Also delete transactions associated with this category
+    // setTransactions(prev => prev.filter(t => t.category.toLowerCase() !== catToDelete?.name.toLowerCase()));
   };
   
   const { income, expenses, balance } = useMemo(() => {
@@ -220,16 +225,14 @@ export default function Dashboard() {
       
       <main className="flex-1 container py-6">
         <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-1 space-y-6">
-             <SummaryCards 
+          <div className="lg:col-span-2 space-y-6">
+            <SummaryCards 
               income={income}
               expenses={expenses}
               balance={balance}
               spendingLimit={spendingLimit}
               onSetSpendingLimit={setSpendingLimit}
             />
-          </div>
-          <div className="lg:col-span-1 space-y-6">
             <TransactionHistory transactions={transactions} />
           </div>
           <div className="lg:col-span-1 space-y-6">
