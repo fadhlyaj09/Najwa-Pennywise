@@ -46,18 +46,16 @@ export default function Dashboard() {
     if (storedCategories) {
         try {
             const parsedCategories: Category[] = JSON.parse(storedCategories);
-            
-            // Deduplicate categories to prevent key errors
             const categoryMap = new Map<string, Category>();
-            
+
             // Add default categories first
             defaultCategories.forEach(cat => {
-              categoryMap.set(cat.name.toLowerCase(), cat)
+              categoryMap.set(cat.name.toLowerCase(), cat);
             });
             
             // Add/update with stored categories, giving them priority
             parsedCategories.forEach(cat => {
-              categoryMap.set(cat.name.toLowerCase(), cat)
+              categoryMap.set(cat.name.toLowerCase(), cat);
             });
 
             setCategories(Array.from(categoryMap.values()));
