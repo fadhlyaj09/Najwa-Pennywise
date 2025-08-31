@@ -45,23 +45,28 @@ export default function Dashboard() {
     
     const storedCategories = localStorage.getItem("pennywise_categories");
     if (storedCategories) {
-      try {
-        const parsedCategories: Category[] = JSON.parse(storedCategories);
-        // Filter out "Rent" category from stored categories
-        const filteredCategories = parsedCategories.filter(c => c.name !== 'Rent');
-        
-        const categoryNames = new Set(filteredCategories.map((c: Category) => c.name));
-        const mergedCategories = [...filteredCategories];
-        defaultCategories.forEach(dc => {
-          if (!categoryNames.has(dc.name)) {
-            mergedCategories.push(dc);
-          }
-        });
-        setCategories(mergedCategories);
-      } catch (e) {
-        console.error("Failed to parse categories from localStorage", e);
-        setCategories(defaultCategories);
-      }
+        try {
+            const parsedCategories: Category[] = JSON.parse(storedCategories);
+            const filteredCategories = parsedCategories.filter(c => c.name !== 'Rent');
+
+            const mergedCategories = [...filteredCategories];
+            const existingCategoryMap = new Map(filteredCategories.map(c => [c.name.toLowerCase(), c.id]));
+
+            defaultCategories.forEach(dc => {
+                const existingId = existingCategoryMap.get(dc.name.toLowerCase());
+                if (!existingId) {
+                    mergedCategories.push(dc);
+                } else if (existingId !== dc.id && !filteredCategories.some(fc => fc.id === dc.id)) {
+                    // This handles cases where a default category name exists but with a different (user-generated) id.
+                    // We avoid pushing the default one to prevent duplicates.
+                }
+            });
+
+            setCategories(mergedCategories);
+        } catch (e) {
+            console.error("Failed to parse categories from localStorage", e);
+            setCategories(defaultCategories);
+        }
     } else {
        setCategories(defaultCategories);
     }
