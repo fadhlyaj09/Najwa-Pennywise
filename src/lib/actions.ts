@@ -12,7 +12,10 @@ export async function generateMonthlyReportAction(
 ) {
   try {
     const transactionHistoryString = transactions
-      .map(t => `${t.date}: ${t.type === 'income' ? '+' : '-'}$${t.amount.toFixed(2)} (${t.category})`)
+      .map(t => {
+        const amount = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(t.amount);
+        return `${t.date}: ${t.type === 'income' ? '+' : '-'}${amount} (${t.category})`;
+      })
       .join('\n');
 
     const result = await generateMonthlyReport({

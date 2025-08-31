@@ -99,8 +99,8 @@ export default function TransactionForm({ categories, onAddTransaction }: Transa
               <FormLabel>Amount</FormLabel>
               <FormControl>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
-                  <Input type="number" placeholder="0.00" className="pl-7" {...field} />
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">Rp</span>
+                  <Input type="number" placeholder="10000" className="pl-8" {...field} />
                 </div>
               </FormControl>
               <FormMessage />

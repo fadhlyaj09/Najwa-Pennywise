@@ -22,7 +22,7 @@ const defaultCategories: Category[] = [
 export default function Dashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>(defaultCategories);
-  const [spendingLimit, setSpendingLimit] = useState<number>(2000);
+  const [spendingLimit, setSpendingLimit] = useState<number>(5000000);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {

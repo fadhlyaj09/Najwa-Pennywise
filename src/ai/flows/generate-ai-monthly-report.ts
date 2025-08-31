@@ -32,7 +32,7 @@ const generateMonthlyReportPrompt = ai.definePrompt({
   name: 'generateMonthlyReportPrompt',
   input: {schema: GenerateMonthlyReportInputSchema},
   output: {schema: GenerateMonthlyReportOutputSchema},
-  prompt: `You are a personal finance advisor, create a comprehensive monthly financial report based on the following data:
+  prompt: `You are a personal finance advisor, create a comprehensive monthly financial report based on the following data. The currency is Indonesian Rupiah (Rp).
 
 Income: {{{income}}}
 Expenses: {{{expenses}}}
@@ -40,7 +40,7 @@ Spending by Category: {{{spendingByCategory}}}
 Spending Limit: {{{spendingLimit}}}
 Transaction History: {{{transactionHistory}}}
 
-Analyze this information and provide insights and summaries of spending habits, and suggest areas for improvement.
+Analyze this information and provide insights and summaries of spending habits, and suggest areas for improvement. Format all currency values in Indonesian Rupiah (Rp).
 `,
 });
 

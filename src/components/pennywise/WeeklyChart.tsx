@@ -38,6 +38,16 @@ const WeeklyChart = ({ transactions }: WeeklyChartProps) => {
     expenses: { label: "Expenses", color: "hsl(var(--chart-1))" },
   }
 
+  const formatRupiahTick = (tick: any) => {
+    if (tick >= 1000000) {
+      return `Rp${tick / 1000000}M`
+    }
+    if (tick >= 1000) {
+        return `Rp${tick/1000}K`
+    }
+    return `Rp${tick}`
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -61,7 +71,7 @@ const WeeklyChart = ({ transactions }: WeeklyChartProps) => {
                   tickLine={false}
                   axisLine={false}
                   tickMargin={10}
-                  tickFormatter={(value) => `$${value}`}
+                  tickFormatter={formatRupiahTick}
                 />
                 <ChartTooltip
                   cursor={false}

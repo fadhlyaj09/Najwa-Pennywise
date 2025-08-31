@@ -27,6 +27,10 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
     setIsEditingLimit(false);
   }
 
+  const formatRupiah = (amount: number) => {
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
+  }
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <Card>
@@ -35,7 +39,7 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
           <ArrowUpCircle className="h-5 w-5 text-green-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">${income.toFixed(2)}</div>
+          <div className="text-2xl font-bold">{formatRupiah(income)}</div>
         </CardContent>
       </Card>
       <Card>
@@ -44,7 +48,7 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
           <ArrowDownCircle className="h-5 w-5 text-red-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">${expenses.toFixed(2)}</div>
+          <div className="text-2xl font-bold">{formatRupiah(expenses)}</div>
         </CardContent>
       </Card>
       <Card>
@@ -54,7 +58,7 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
         </CardHeader>
         <CardContent>
           <div className={`text-2xl font-bold ${balance >= 0 ? 'text-foreground' : 'text-red-500'}`}>
-            ${balance.toFixed(2)}
+            {formatRupiah(balance)}
           </div>
         </CardContent>
       </Card>
@@ -80,15 +84,15 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
               className="mt-1 h-8"
             />
           ) : (
-            <div className="text-2xl font-bold">${spendingLimit.toFixed(2)}</div>
+            <div className="text-2xl font-bold">{formatRupiah(spendingLimit)}</div>
           )}
         </CardHeader>
         <CardContent className="space-y-2">
             <Progress value={spendingProgress} className={limitExceeded ? "[&>div]:bg-destructive" : ""} />
             <p className={`text-xs ${limitExceeded ? 'text-destructive' : 'text-muted-foreground'}`}>
                 {limitExceeded
-                ? `You've exceeded your limit by $${(expenses - spendingLimit).toFixed(2)}`
-                : `$${(spendingLimit - expenses).toFixed(2)} remaining`}
+                ? `You've exceeded your limit by ${formatRupiah(expenses - spendingLimit)}`
+                : `${formatRupiah(spendingLimit - expenses)} remaining`}
             </p>
         </CardContent>
       </Card>
