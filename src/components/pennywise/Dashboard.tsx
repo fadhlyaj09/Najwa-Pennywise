@@ -25,7 +25,7 @@ const defaultCategories: Omit<Category, 'id' | 'isDefault'>[] = [
     { name: 'Transport', icon: 'Car', type: 'expense' },
     { name: 'Snacks', icon: 'Cookie', type: 'expense' },
     { name: 'Monthly Shopping', icon: 'ShoppingBag', type: 'expense' },
-    { name_above: 'Hangout', icon: 'Users', type: 'expense' },
+    { name: 'Hangout', icon: 'Users', type: 'expense' },
     { name: 'Internet Quota', icon: 'Wifi', type: 'expense' },
 ];
 
