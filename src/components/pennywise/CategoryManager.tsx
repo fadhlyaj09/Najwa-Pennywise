@@ -36,58 +36,62 @@ export default function CategoryManager({ categories, onAddCategory, onDeleteCat
   const sortedCategories = [...categories].sort((a, b) => {
       if (a.name === 'Salary') return -1;
       if (b.name === 'Salary') return 1;
+      if (a.isDefault && !b.isDefault) return -1;
+      if (!a.isDefault && b.isDefault) return 1;
       return a.name.localeCompare(b.name);
   });
 
   return (
-    <div className="flex flex-col h-full">
-        <div className="p-4">
+    <ScrollArea className="h-full">
+      <div className="p-4">
+        <div className="space-y-4">
+          <div>
             <h4 className="text-sm font-medium mb-2">Add New Category</h4>
             <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-start gap-2">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-start gap-2">
                 <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
                     <FormItem className="flex-grow">
-                    <FormControl>
+                      <FormControl>
                         <Input placeholder="e.g., Entertainment" {...field} />
-                    </FormControl>
-                    <FormMessage />
+                      </FormControl>
+                      <FormMessage />
                     </FormItem>
-                )}
+                  )}
                 />
                 <Button type="submit">Add</Button>
-            </form>
+              </form>
             </Form>
-        </div>
+          </div>
 
-        <Separator />
-        
-        <div className="flex-1 min-h-0 p-4">
+          <Separator />
+
+          <div>
             <h4 className="text-sm font-medium mb-2">Existing Categories</h4>
-            <ScrollArea className="h-full pr-2">
-                <div className="flex flex-wrap gap-2 pb-4">
-                    {sortedCategories.map((cat) => (
-                      <Badge key={cat.id} variant="secondary" className="group relative pr-7">
-                        {cat.name}
-                        {!cat.isDefault && (
-                           <button
-                            onClick={() => onDeleteCategory(cat.id)}
-                            className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full p-0.5 bg-muted-foreground/20 text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground"
-                           >
-                               <X className="h-3 w-3" />
-                               <span className="sr-only">Delete {cat.name}</span>
-                           </button>
-                        )}
-                      </Badge>
-                    ))}
-                    {sortedCategories.length === 0 && (
-                      <p className="text-sm text-muted-foreground w-full text-center py-4">No categories added yet.</p>
-                    )}
-                </div>
-            </ScrollArea>
+            <div className="flex flex-wrap gap-2 pb-4">
+              {sortedCategories.map((cat) => (
+                <Badge key={cat.id} variant="secondary" className="group relative pr-7">
+                  {cat.name}
+                  {!cat.isDefault && (
+                     <button
+                      onClick={() => onDeleteCategory(cat.id)}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full p-0.5 bg-muted-foreground/20 text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground"
+                      aria-label={`Delete ${cat.name}`}
+                     >
+                         <X className="h-3 w-3" />
+                     </button>
+                  )}
+                </Badge>
+              ))}
+              {sortedCategories.length === 0 && (
+                <p className="text-sm text-muted-foreground w-full text-center py-4">No categories added yet.</p>
+              )}
+            </div>
+          </div>
         </div>
-    </div>
+      </div>
+    </ScrollArea>
   );
 }
