@@ -20,7 +20,6 @@ const defaultCategories: Omit<Category, 'id'>[] = [
   { name: 'Dinner', icon: 'UtensilsCrossed' },
   { name: 'Snacks', icon: 'Cookie' },
   { name: 'Monthly Shopping', icon: 'ShoppingBag' },
-  { name: 'Hangout', icon: 'Users' },
 ];
 
 export default function Dashboard() {
@@ -42,31 +41,31 @@ export default function Dashboard() {
     }
     
     const storedCategories = localStorage.getItem("pennywise_categories");
+    let initialCategories: Category[] = [];
     if (storedCategories) {
         try {
-            const parsedCategories: Category[] = JSON.parse(storedCategories);
-            const categoryMap = new Map<string, Category>();
-
-            // Add stored categories first to give them priority
-            parsedCategories.forEach(cat => {
-              categoryMap.set(cat.name.toLowerCase(), cat);
-            });
-            
-            // Add default categories only if they don't already exist
-            defaultCategories.forEach(defaultCat => {
-              if (!categoryMap.has(defaultCat.name.toLowerCase())) {
-                categoryMap.set(defaultCat.name.toLowerCase(), { ...defaultCat, id: crypto.randomUUID() });
-              }
-            });
-
-            setCategories(Array.from(categoryMap.values()));
+            initialCategories = JSON.parse(storedCategories);
         } catch (e) {
             console.error("Failed to parse categories from localStorage", e);
-             setCategories(defaultCategories.map(cat => ({ ...cat, id: crypto.randomUUID() })));
+            initialCategories = [];
         }
-    } else {
-       setCategories(defaultCategories.map(cat => ({ ...cat, id: crypto.randomUUID() })));
     }
+
+    const categoryMap = new Map<string, Category>();
+    
+    // Add stored categories first to give them priority
+    initialCategories.forEach(cat => {
+      categoryMap.set(cat.name.toLowerCase(), cat);
+    });
+    
+    // Add default categories only if they don't already exist
+    defaultCategories.forEach(defaultCat => {
+      if (!categoryMap.has(defaultCat.name.toLowerCase())) {
+        categoryMap.set(defaultCat.name.toLowerCase(), { ...defaultCat, id: crypto.randomUUID() });
+      }
+    });
+
+    setCategories(Array.from(categoryMap.values()));
 
     const storedLimit = localStorage.getItem("pennywise_limit");
     if (storedLimit) {
