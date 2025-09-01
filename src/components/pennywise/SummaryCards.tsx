@@ -49,7 +49,7 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
           <ArrowUpCircle className="h-4 w-4 text-green-500" />
         </CardHeader>
         <CardContent className="p-4 pt-0">
-          <div className="text-xl font-bold">{formatRupiah(income)}</div>
+          <div className="text-lg font-bold break-all">{formatRupiah(income)}</div>
         </CardContent>
       </Card>
       <Card>
@@ -58,7 +58,7 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
           <ArrowDownCircle className="h-4 w-4 text-red-500" />
         </CardHeader>
         <CardContent className="p-4 pt-0">
-          <div className="text-xl font-bold">{formatRupiah(expenses)}</div>
+          <div className="text-lg font-bold break-all">{formatRupiah(expenses)}</div>
         </CardContent>
       </Card>
       <Card className="col-span-2">
@@ -67,7 +67,7 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
           <Wallet className="h-4 w-4 text-blue-500" />
         </CardHeader>
         <CardContent className="p-4 pt-0">
-          <div className={`text-xl font-bold ${balance >= 0 ? 'text-foreground' : 'text-destructive'}`}>
+          <div className={`text-lg font-bold break-all ${balance >= 0 ? 'text-foreground' : 'text-destructive'}`}>
             {formatRupiah(balance)}
           </div>
         </CardContent>
@@ -99,11 +99,11 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
               onChange={handleLimitChange}
               onBlur={handleLimitSave}
               onKeyDown={(e) => e.key === 'Enter' && handleLimitSave()}
-              className="mt-1 h-8 text-xl"
+              className="mt-1 h-8 text-lg"
               placeholder="Enter limit"
             />
           ) : (
-            <div className="text-xl font-bold">{formatRupiah(spendingLimit)}</div>
+            <div className="text-lg font-bold break-all">{formatRupiah(spendingLimit)}</div>
           )}
         </CardHeader>
         <CardContent className="space-y-1 p-4 pt-0">
