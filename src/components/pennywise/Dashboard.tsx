@@ -19,7 +19,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 
-const initialCategories: Omit<Category, 'id'>[] = [
+const initialCategoriesData: Omit<Category, 'id'>[] = [
     { name: 'Salary', icon: 'Landmark', type: 'income' },
     { name: 'Breakfast', icon: 'Coffee', type: 'expense' },
     { name: 'Lunch', icon: 'Utensils', type: 'expense' },
@@ -30,6 +30,15 @@ const initialCategories: Omit<Category, 'id'>[] = [
     { name: 'Monthly Shopping', icon: 'ShoppingBag', type: 'expense' },
     { name: 'Hangout', icon: 'Users', type: 'expense' },
     { name: 'Internet Quota', icon: 'Wifi', type: 'expense' },
+];
+
+const successMessages = [
+    "Transaksi berhasil, cantik! Hebat banget ngatur keuangannya!",
+    "Tercatat! Kamu memang paling bisa diandalkan, cantik.",
+    "Luar biasa, cantik! Satu langkah lagi menuju tujuan finansialmu.",
+    "Mantap, cantik! Pengeluaran terkontrol, masa depan cerah.",
+    "Dicatat, cantik! Setiap rupiah berharga, dan kamu memahaminya.",
+    "Keren, cantik! Terus disiplin seperti ini ya.",
 ];
 
 export default function Dashboard() {
@@ -54,7 +63,7 @@ export default function Dashboard() {
       }
       
       if (storedCategories.length === 0) {
-        const newInitialCategories = initialCategories.map(cat => ({ ...cat, id: crypto.randomUUID() }));
+        const newInitialCategories = initialCategoriesData.map(cat => ({ ...cat, id: crypto.randomUUID() }));
         setCategories(newInitialCategories);
         localStorage.setItem("pennywise_categories", JSON.stringify(newInitialCategories));
       } else {
@@ -96,9 +105,11 @@ export default function Dashboard() {
     const newTransaction = { ...transaction, id: crypto.randomUUID() };
     setTransactions(prev => [newTransaction, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     setTransactionFormOpen(false);
+    
+    const randomMessage = successMessages[Math.floor(Math.random() * successMessages.length)];
     toast({
       title: "Success!",
-      description: "jangan boros-boros yah cantikk",
+      description: randomMessage,
     });
   };
   
@@ -257,8 +268,8 @@ export default function Dashboard() {
       </header>
       
       <main className="flex-1 w-full max-w-5xl mx-auto p-4">
-        <div className="grid gap-6 md:grid-cols-2">
-            <div className="md:col-span-2">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="md:col-span-2 lg:col-span-3">
                 <SummaryCards 
                 income={income}
                 expenses={expenses}
@@ -267,10 +278,10 @@ export default function Dashboard() {
                 onSetSpendingLimit={setSpendingLimit}
                 />
             </div>
-          <div className="md:col-span-1 flex flex-col gap-6">
+          <div className="md:col-span-2 lg:col-span-1 flex flex-col gap-6">
             <TransactionHistory transactions={transactions} />
           </div>
-          <div className="md:col-span-1 flex flex-col gap-6">
+          <div className="md:col-span-2 lg:col-span-2 flex flex-col gap-6">
             <WeeklyChart transactions={transactions} />
             <AiReport transactions={transactions} spendingLimit={spendingLimit} income={income} expenses={expenses} />
           </div>
