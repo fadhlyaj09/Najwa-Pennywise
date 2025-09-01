@@ -21,7 +21,7 @@ const formSchema = z.object({
 
 interface CategoryManagerProps {
   categories: Category[];
-  onAddCategory: (category: Omit<Category, 'id' | 'isDefault'>) => void;
+  onAddCategory: (category: Omit<Category, 'id'>) => void;
   onDeleteCategory: (id: string) => void;
 }
 
@@ -37,8 +37,6 @@ export default function CategoryManager({ categories, onAddCategory, onDeleteCat
   }
 
   const sortedCategories = [...categories].sort((a, b) => {
-    if (a.isDefault && !b.isDefault) return -1;
-    if (!a.isDefault && b.isDefault) return 1;
     if (a.type !== b.type) return a.type === 'income' ? -1 : 1;
     return a.name.localeCompare(b.name);
   });
@@ -109,15 +107,13 @@ export default function CategoryManager({ categories, onAddCategory, onDeleteCat
                   className="group relative pr-7"
                 >
                   {cat.name}
-                  {!cat.isDefault && (
-                     <button
-                      onClick={() => onDeleteCategory(cat.id)}
-                      className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full p-0.5 bg-muted-foreground/20 text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground"
-                      aria-label={`Delete ${cat.name}`}
-                     >
-                         <X className="h-3 w-3" />
-                     </button>
-                  )}
+                   <button
+                    onClick={() => onDeleteCategory(cat.id)}
+                    className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full p-0.5 bg-muted-foreground/20 text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground"
+                    aria-label={`Delete ${cat.name}`}
+                   >
+                       <X className="h-3 w-3" />
+                   </button>
                 </Badge>
               ))}
               {sortedCategories.length === 0 && (
@@ -130,5 +126,3 @@ export default function CategoryManager({ categories, onAddCategory, onDeleteCat
     </div>
   );
 }
-
-    

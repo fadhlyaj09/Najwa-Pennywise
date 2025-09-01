@@ -11,7 +11,6 @@ export interface Category {
   name: string;
   icon: string;
   type: 'income' | 'expense';
-  isDefault?: boolean;
 }
 
 export interface Debt {

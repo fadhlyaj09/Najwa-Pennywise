@@ -19,7 +19,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 
-const defaultCategories: Omit<Category, 'id' | 'isDefault'>[] = [
+const initialCategories: Omit<Category, 'id'>[] = [
     { name: 'Salary', icon: 'Landmark', type: 'income' },
     { name: 'Breakfast', icon: 'Coffee', type: 'expense' },
     { name: 'Lunch', icon: 'Utensils', type: 'expense' },
@@ -54,15 +54,18 @@ export default function Dashboard() {
       }
 
       const storedCategories = localStorage.getItem("pennywise_categories");
-      const userCategories: Category[] = storedCategories ? JSON.parse(storedCategories).map((c: any) => ({...c, isDefault: false})) : [];
-
-      const initialDefaultCategories: Category[] = defaultCategories.map(cat => ({
-        ...cat,
-        id: `default-${cat.name.toLowerCase().replace(/\s+/g, '-')}`,
-        isDefault: true,
-      }));
-
-      setCategories([...userCategories, ...initialDefaultCategories]);
+      if (storedCategories) {
+        try {
+          setCategories(JSON.parse(storedCategories));
+        } catch (e) {
+           setCategories([]);
+        }
+      } else {
+        // If no categories in storage, this is likely the first run.
+        // Populate with initial categories.
+        const newCategories = initialCategories.map(cat => ({...cat, id: crypto.randomUUID()}));
+        setCategories(newCategories);
+      }
       
       const storedLimit = localStorage.getItem("pennywise_limit");
       if (storedLimit) {
@@ -76,8 +79,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (isLoaded) {
         localStorage.setItem("pennywise_transactions", JSON.stringify(transactions));
-        const userDefinedCategories = categories.filter(c => !c.isDefault);
-        localStorage.setItem("pennywise_categories", JSON.stringify(userDefinedCategories));
+        localStorage.setItem("pennywise_categories", JSON.stringify(categories));
         localStorage.setItem("pennywise_limit", JSON.stringify(spendingLimit));
     }
   }, [transactions, categories, spendingLimit, isLoaded]);
@@ -96,7 +98,7 @@ export default function Dashboard() {
     });
   };
   
-  const addCategory = (category: Omit<Category, "id" | 'isDefault'>) => {
+  const addCategory = (category: Omit<Category, "id">) => {
     setCategories(prev => {
         const existingCategory = prev.find(c => c.name.toLowerCase() === category.name.toLowerCase() && c.type === category.type);
         if (existingCategory) {
@@ -107,7 +109,7 @@ export default function Dashboard() {
            });
            return prev; 
         }
-        const newCategory: Category = { ...category, id: crypto.randomUUID(), isDefault: false };
+        const newCategory: Category = { ...category, id: crypto.randomUUID() };
         return [...prev, newCategory];
     });
   };
@@ -115,15 +117,6 @@ export default function Dashboard() {
   const deleteCategory = (id: string) => {
     const categoryToDelete = categories.find(c => c.id === id);
     if (!categoryToDelete) return;
-
-    if (categoryToDelete.isDefault) {
-      toast({
-        variant: "destructive",
-        title: "Cannot delete category",
-        description: "Default categories cannot be deleted."
-      });
-      return;
-    };
 
     const isCategoryInUse = transactions.some(t => t.category.toLowerCase() === categoryToDelete.name.toLowerCase() && t.type === categoryToDelete.type);
     
