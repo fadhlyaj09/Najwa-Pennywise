@@ -19,7 +19,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 
-const defaultCategories: Omit<Category, 'id'>[] = [
+const defaultCategories: Omit<Category, 'id' | 'isDefault'>[] = [
     { name: 'Salary', icon: 'Landmark', type: 'income' },
     { name: 'Breakfast', icon: 'Coffee', type: 'expense' },
     { name: 'Lunch', icon: 'Utensils', type: 'expense' },
@@ -43,7 +43,6 @@ export default function Dashboard() {
 
    useEffect(() => {
     if (typeof window !== 'undefined') {
-      // Load transactions
       const storedTransactions = localStorage.getItem("pennywise_transactions");
       if (storedTransactions) {
         try {
@@ -54,34 +53,17 @@ export default function Dashboard() {
         }
       }
 
-      // Load categories
+      const storedCategories = localStorage.getItem("pennywise_categories");
+      const userCategories: Category[] = storedCategories ? JSON.parse(storedCategories).map((c: any) => ({...c, isDefault: false})) : [];
+
       const initialDefaultCategories: Category[] = defaultCategories.map(cat => ({
         ...cat,
         id: `default-${cat.name.toLowerCase().replace(/\s+/g, '-')}`,
         isDefault: true,
       }));
-      
-      const userCategories: Category[] = (() => {
-        const stored = localStorage.getItem("pennywise_categories");
-        if (!stored) return [];
-        try {
-          // Ensure every user category is marked as not default
-          return JSON.parse(stored).map((c: any) => ({...c, isDefault: false}));
-        } catch (e) {
-          console.error("Failed to parse categories:", e);
-          return [];
-        }
-      })();
 
-      const combined = [...userCategories, ...initialDefaultCategories];
-      const uniqueCategories = combined.filter((category, index, self) =>
-        index === self.findIndex((c) => (
-          c.name.toLowerCase() === category.name.toLowerCase() && c.type === category.type
-        ))
-      );
-      setCategories(uniqueCategories);
+      setCategories([...userCategories, ...initialDefaultCategories]);
       
-      // Load spending limit
       const storedLimit = localStorage.getItem("pennywise_limit");
       if (storedLimit) {
         setSpendingLimit(JSON.parse(storedLimit));
@@ -103,11 +85,15 @@ export default function Dashboard() {
   const addTransaction = (transaction: Omit<Transaction, "id">) => {
     const categoryExists = categories.some(c => c.name.toLowerCase() === transaction.category.toLowerCase() && c.type === transaction.type);
     if (!categoryExists) {
-        // Pass a callback to addCategory to ensure it receives the latest state
         addCategory({ name: transaction.category, icon: 'Tag', type: transaction.type });
     }
     const newTransaction = { ...transaction, id: crypto.randomUUID() };
     setTransactions(prev => [newTransaction, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+    setTransactionFormOpen(false);
+    toast({
+      title: "Success!",
+      description: "jangan boros-boros yah cantikk",
+    });
   };
   
   const addCategory = (category: Omit<Category, "id" | 'isDefault'>) => {
@@ -211,10 +197,7 @@ export default function Dashboard() {
                  <TransactionForm
                    incomeCategories={incomeCategories}
                    expenseCategories={expenseCategories}
-                   onAddTransaction={(t) => {
-                     addTransaction(t);
-                     setTransactionFormOpen(false);
-                   }}
+                   onAddTransaction={addTransaction}
                  />
               </DialogContent>
             </Dialog>
@@ -277,20 +260,18 @@ export default function Dashboard() {
       </header>
       
       <main className="flex-1 w-full max-w-5xl mx-auto py-6 px-4">
-        <div className="grid gap-6 lg:grid-cols-2">
-          <div className="lg:col-span-2 grid gap-6">
-             <SummaryCards 
+        <div className="grid gap-6 md:grid-cols-2">
+            <SummaryCards 
               income={income}
               expenses={expenses}
               balance={balance}
               spendingLimit={spendingLimit}
               onSetSpendingLimit={setSpendingLimit}
             />
-          </div>
-          <div className="lg:col-span-1 flex flex-col gap-6">
+          <div className="md:col-span-1 flex flex-col gap-6">
             <TransactionHistory transactions={transactions} />
           </div>
-          <div className="lg:col-span-1 flex flex-col gap-6">
+          <div className="md:col-span-1 flex flex-col gap-6">
             <WeeklyChart transactions={transactions} />
             <AiReport transactions={transactions} spendingLimit={spendingLimit} income={income} expenses={expenses} />
           </div>
@@ -299,5 +280,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
-    

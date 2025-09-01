@@ -16,7 +16,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { Category, Transaction } from "@/lib/types";
-import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ChevronsUpDown } from "lucide-react";
@@ -39,7 +38,6 @@ interface TransactionFormProps {
 }
 
 export default function TransactionForm({ incomeCategories, expenseCategories, onAddTransaction }: TransactionFormProps) {
-  const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -57,10 +55,6 @@ export default function TransactionForm({ incomeCategories, expenseCategories, o
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     onAddTransaction(values);
-    toast({
-      title: "Success!",
-      description: "jangan boros-boros yah cantikk",
-    });
     form.reset({
       type: "expense",
       amount: 0,
