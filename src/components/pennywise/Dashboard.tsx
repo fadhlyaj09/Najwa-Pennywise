@@ -42,6 +42,9 @@ const successMessages = [
     "Catatanmu keren, secantik orangnya!",
     "Sempurna! Kamu jago banget, cantik!",
     "Wow, cantik! Keuanganmu makin teratur saja.",
+    "Gadis pintar sepertimu memang jago mengelola uang!",
+    "Kamu hebat, cantik! Terus semangat menabungnya ya.",
+    "Cantik dan cerdas secara finansial, paket komplit!",
 ];
 
 export default function Dashboard() {
@@ -55,37 +58,35 @@ export default function Dashboard() {
 
    useEffect(() => {
     if (typeof window !== 'undefined') {
+      const storedCategoriesJson = localStorage.getItem("pennywise_categories");
+      const storedTransactionsJson = localStorage.getItem("pennywise_transactions");
+      const storedLimitJson = localStorage.getItem("pennywise_limit");
+      
       let storedCategories: Category[] = [];
-      try {
-        const storedCategoriesJson = localStorage.getItem("pennywise_categories");
-        if (storedCategoriesJson) {
+      if (storedCategoriesJson) {
+        try {
           storedCategories = JSON.parse(storedCategoriesJson);
-        }
-      } catch (e) {
-        console.error("Failed to parse categories:", e);
+        } catch (e) { console.error("Failed to parse categories:", e); }
       }
       
       if (storedCategories.length === 0) {
-        const newInitialCategories = initialCategoriesData.map(cat => ({ ...cat, id: crypto.randomUUID() }));
-        setCategories(newInitialCategories);
-        localStorage.setItem("pennywise_categories", JSON.stringify(newInitialCategories));
+          const initialCategoriesWithId = initialCategoriesData.map(c => ({...c, id: crypto.randomUUID()}));
+          setCategories(initialCategoriesWithId);
+          localStorage.setItem("pennywise_categories", JSON.stringify(initialCategoriesWithId));
       } else {
-        setCategories(storedCategories);
-      }
-
-      const storedTransactions = localStorage.getItem("pennywise_transactions");
-      if (storedTransactions) {
-        try {
-          setTransactions(JSON.parse(storedTransactions));
-        } catch (e) {
-          console.error("Failed to parse transactions:", e);
-          setTransactions([]);
-        }
+          setCategories(storedCategories);
       }
       
-      const storedLimit = localStorage.getItem("pennywise_limit");
-      if (storedLimit) {
-        setSpendingLimit(JSON.parse(storedLimit));
+      if (storedTransactionsJson) {
+        try {
+          setTransactions(JSON.parse(storedTransactionsJson));
+        } catch (e) { console.error("Failed to parse transactions:", e); }
+      }
+      
+      if (storedLimitJson) {
+        try {
+            setSpendingLimit(JSON.parse(storedLimitJson));
+        } catch (e) { console.error("Failed to parse limit:", e); }
       }
       
       setIsLoaded(true);
@@ -182,7 +183,7 @@ export default function Dashboard() {
 
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-background overflow-x-hidden">
       <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="w-full max-w-5xl mx-auto flex h-16 items-center justify-between px-4">
           <NextLink href="/" passHref>

@@ -18,7 +18,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.variable} font-body antialiased`} suppressHydrationWarning={true}>
+      <body className={`${inter.variable} font-body antialiased overflow-x-hidden`} suppressHydrationWarning={true}>
         <AuthProvider>
           {children}
         </AuthProvider>
