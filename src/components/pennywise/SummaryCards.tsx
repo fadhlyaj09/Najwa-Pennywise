@@ -42,14 +42,14 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-2 gap-4">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
           <CardTitle className="text-sm font-medium">Total Income</CardTitle>
           <ArrowUpCircle className="h-4 w-4 text-green-500" />
         </CardHeader>
         <CardContent className="p-4 pt-0">
-          <div className="text-2xl font-bold">{formatRupiah(income)}</div>
+          <div className="text-xl font-bold">{formatRupiah(income)}</div>
         </CardContent>
       </Card>
       <Card>
@@ -58,21 +58,21 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
           <ArrowDownCircle className="h-4 w-4 text-red-500" />
         </CardHeader>
         <CardContent className="p-4 pt-0">
-          <div className="text-2xl font-bold">{formatRupiah(expenses)}</div>
+          <div className="text-xl font-bold">{formatRupiah(expenses)}</div>
         </CardContent>
       </Card>
-      <Card>
+      <Card className="col-span-2">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
           <CardTitle className="text-sm font-medium">Balance</CardTitle>
           <Wallet className="h-4 w-4 text-blue-500" />
         </CardHeader>
         <CardContent className="p-4 pt-0">
-          <div className={`text-2xl font-bold ${balance >= 0 ? 'text-foreground' : 'text-destructive'}`}>
+          <div className={`text-xl font-bold ${balance >= 0 ? 'text-foreground' : 'text-destructive'}`}>
             {formatRupiah(balance)}
           </div>
         </CardContent>
       </Card>
-      <Card>
+      <Card className="col-span-2">
         <CardHeader className="pb-2 p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -99,11 +99,11 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
               onChange={handleLimitChange}
               onBlur={handleLimitSave}
               onKeyDown={(e) => e.key === 'Enter' && handleLimitSave()}
-              className="mt-1 h-8"
+              className="mt-1 h-8 text-xl"
               placeholder="Enter limit"
             />
           ) : (
-            <div className="text-2xl font-bold">{formatRupiah(spendingLimit)}</div>
+            <div className="text-xl font-bold">{formatRupiah(spendingLimit)}</div>
           )}
         </CardHeader>
         <CardContent className="space-y-1 p-4 pt-0">

@@ -39,6 +39,9 @@ const successMessages = [
     "Mantap, cantik! Pengeluaran terkontrol, masa depan cerah.",
     "Dicatat, cantik! Setiap rupiah berharga, dan kamu memahaminya.",
     "Keren, cantik! Terus disiplin seperti ini ya.",
+    "Catatanmu keren, secantik orangnya!",
+    "Sempurna! Kamu jago banget, cantik!",
+    "Wow, cantik! Keuanganmu makin teratur saja.",
 ];
 
 export default function Dashboard() {
@@ -183,7 +186,7 @@ export default function Dashboard() {
       <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="w-full max-w-5xl mx-auto flex h-16 items-center justify-between px-4">
           <NextLink href="/" passHref>
-            <h1 className="text-xl md:text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent text-transparent bg-clip-text cursor-pointer pl-2 md:pl-0">
+            <h1 className="text-xl md:text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent text-transparent bg-clip-text cursor-pointer">
               <span className="md:hidden">Najwa</span>
               <span className="hidden md:inline">Najwa Pennywise</span>
             </h1>
@@ -268,8 +271,8 @@ export default function Dashboard() {
       </header>
       
       <main className="flex-1 w-full max-w-5xl mx-auto p-4">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <div className="md:col-span-2 lg:col-span-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="col-span-1 md:col-span-2">
                 <SummaryCards 
                 income={income}
                 expenses={expenses}
@@ -278,10 +281,10 @@ export default function Dashboard() {
                 onSetSpendingLimit={setSpendingLimit}
                 />
             </div>
-          <div className="md:col-span-2 lg:col-span-1 flex flex-col gap-6">
+          <div className="col-span-1 md:col-span-1 flex flex-col gap-6">
             <TransactionHistory transactions={transactions} />
           </div>
-          <div className="md:col-span-2 lg:col-span-2 flex flex-col gap-6">
+          <div className="col-span-1 md:col-span-1 flex flex-col gap-6">
             <WeeklyChart transactions={transactions} />
             <AiReport transactions={transactions} spendingLimit={spendingLimit} income={income} expenses={expenses} />
           </div>
