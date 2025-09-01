@@ -3,12 +3,6 @@
 // In a real application, this would be handled by a backend service.
 import { findUserByEmail, registerNewUser } from "@/ai/flows/user-auth-flow";
 
-
-export const FAKE_USER = {
-  email: 'user@example.com',
-  password: 'password',
-};
-
 export async function authenticate(email: string, pass: string): Promise<boolean> {
   // Simulate network delay
   await new Promise(resolve => setTimeout(resolve, 500));
@@ -21,9 +15,6 @@ export async function authenticate(email: string, pass: string): Promise<boolean
   } catch (error) {
     console.error("Error during authentication:", error);
     // Fallback to local user if sheets auth fails, useful for development
-    if (email.toLowerCase() === FAKE_USER.email && pass === FAKE_USER.password) {
-        return true;
-    }
   }
   
   return false;

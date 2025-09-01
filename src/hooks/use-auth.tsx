@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { FAKE_USER, authenticate } from '@/lib/auth';
+import { authenticate } from '@/lib/auth';
 
 interface AuthContextType {
   isAuthenticated: boolean;
