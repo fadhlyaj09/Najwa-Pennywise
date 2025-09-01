@@ -2,8 +2,8 @@
 "use client";
 
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowUpCircle, ArrowDownCircle, Wallet, Edit, Check } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowUpCircle, ArrowDownCircle, Wallet, Edit, Check, Target } from 'lucide-react';
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,7 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
 
   const handleLimitSave = () => {
     const limitAsNumber = Number(newLimit);
-    if (newLimit === '' || isNaN(limitAsNumber)) {
+    if (newLimit === '' || isNaN(limitAsNumber) || limitAsNumber < 0) {
       onSetSpendingLimit(0);
     } else {
       onSetSpendingLimit(limitAsNumber);
@@ -42,40 +42,43 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
   }
 
   return (
-    <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
-          <CardTitle className="text-xs font-medium">Total Income</CardTitle>
+          <CardTitle className="text-sm font-medium">Total Income</CardTitle>
           <ArrowUpCircle className="h-4 w-4 text-green-500" />
         </CardHeader>
         <CardContent className="p-4 pt-0">
-          <div className="text-xl font-bold">{formatRupiah(income)}</div>
+          <div className="text-2xl font-bold">{formatRupiah(income)}</div>
         </CardContent>
       </Card>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
-          <CardTitle className="text-xs font-medium">Total Expenses</CardTitle>
+          <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
           <ArrowDownCircle className="h-4 w-4 text-red-500" />
         </CardHeader>
         <CardContent className="p-4 pt-0">
-          <div className="text-xl font-bold">{formatRupiah(expenses)}</div>
+          <div className="text-2xl font-bold">{formatRupiah(expenses)}</div>
         </CardContent>
       </Card>
-      <Card className="col-span-2">
+      <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
-          <CardTitle className="text-xs font-medium">Balance</CardTitle>
+          <CardTitle className="text-sm font-medium">Balance</CardTitle>
           <Wallet className="h-4 w-4 text-blue-500" />
         </CardHeader>
         <CardContent className="p-4 pt-0">
-          <div className={`text-xl font-bold ${balance >= 0 ? 'text-foreground' : 'text-red-500'}`}>
+          <div className={`text-2xl font-bold ${balance >= 0 ? 'text-foreground' : 'text-destructive'}`}>
             {formatRupiah(balance)}
           </div>
         </CardContent>
       </Card>
-      <Card className="col-span-2 md:col-span-4">
+      <Card>
         <CardHeader className="pb-2 p-4">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-xs font-medium">Spending Limit</CardTitle>
+            <div className="flex items-center gap-2">
+                <Target className="h-4 w-4 text-muted-foreground"/>
+                <CardTitle className="text-sm font-medium">Spending Limit</CardTitle>
+            </div>
              {isEditingLimit ? (
                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleLimitSave}>
                   <Check className="h-4 w-4" />
@@ -100,15 +103,15 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
               placeholder="Enter limit"
             />
           ) : (
-            <div className="text-xl font-bold">{formatRupiah(spendingLimit)}</div>
+            <div className="text-2xl font-bold">{formatRupiah(spendingLimit)}</div>
           )}
         </CardHeader>
-        <CardContent className="space-y-2 p-4 pt-0">
+        <CardContent className="space-y-1 p-4 pt-0">
             <Progress value={spendingProgress} className={limitExceeded ? "[&>div]:bg-destructive" : ""} />
             <p className={`text-xs ${limitExceeded ? 'text-destructive' : 'text-muted-foreground'}`}>
                 {limitExceeded
-                ? `You've exceeded your limit by ${formatRupiah(expenses - spendingLimit)}`
-                : `${formatRupiah(spendingLimit - expenses)} remaining`}
+                ? `Limit terlampaui ${formatRupiah(expenses - spendingLimit)}`
+                : `${formatRupiah(spendingLimit - expenses)} tersisa`}
             </p>
         </CardContent>
       </Card>
@@ -117,5 +120,3 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
 };
 
 export default SummaryCards;
-
-    

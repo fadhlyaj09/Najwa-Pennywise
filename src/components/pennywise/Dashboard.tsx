@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo, type ReactNode } from "react";
+import { useState, useEffect, useMemo } from "react";
 import NextLink from 'next/link';
 import { useRouter } from "next/navigation";
 import { PlusCircle, Tags, LogOut, BookUser, MoreVertical } from "lucide-react";
@@ -43,6 +43,24 @@ export default function Dashboard() {
 
    useEffect(() => {
     if (typeof window !== 'undefined') {
+      let storedCategories: Category[] = [];
+      try {
+        const storedCategoriesJson = localStorage.getItem("pennywise_categories");
+        if (storedCategoriesJson) {
+          storedCategories = JSON.parse(storedCategoriesJson);
+        }
+      } catch (e) {
+        console.error("Failed to parse categories:", e);
+      }
+      
+      if (storedCategories.length === 0) {
+        const newInitialCategories = initialCategories.map(cat => ({ ...cat, id: crypto.randomUUID() }));
+        setCategories(newInitialCategories);
+        localStorage.setItem("pennywise_categories", JSON.stringify(newInitialCategories));
+      } else {
+        setCategories(storedCategories);
+      }
+
       const storedTransactions = localStorage.getItem("pennywise_transactions");
       if (storedTransactions) {
         try {
@@ -51,20 +69,6 @@ export default function Dashboard() {
           console.error("Failed to parse transactions:", e);
           setTransactions([]);
         }
-      }
-
-      const storedCategories = localStorage.getItem("pennywise_categories");
-      if (storedCategories) {
-        try {
-          setCategories(JSON.parse(storedCategories));
-        } catch (e) {
-           setCategories([]);
-        }
-      } else {
-        // If no categories in storage, this is likely the first run.
-        // Populate with initial categories.
-        const newCategories = initialCategories.map(cat => ({...cat, id: crypto.randomUUID()}));
-        setCategories(newCategories);
       }
       
       const storedLimit = localStorage.getItem("pennywise_limit");
@@ -252,15 +256,17 @@ export default function Dashboard() {
         </div>
       </header>
       
-      <main className="flex-1 w-full max-w-5xl mx-auto py-6 px-4">
+      <main className="flex-1 w-full max-w-5xl mx-auto p-4">
         <div className="grid gap-6 md:grid-cols-2">
-            <SummaryCards 
-              income={income}
-              expenses={expenses}
-              balance={balance}
-              spendingLimit={spendingLimit}
-              onSetSpendingLimit={setSpendingLimit}
-            />
+            <div className="md:col-span-2">
+                <SummaryCards 
+                income={income}
+                expenses={expenses}
+                balance={balance}
+                spendingLimit={spendingLimit}
+                onSetSpendingLimit={setSpendingLimit}
+                />
+            </div>
           <div className="md:col-span-1 flex flex-col gap-6">
             <TransactionHistory transactions={transactions} />
           </div>
