@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useForm, useWatch } from "react-hook-form";
@@ -58,7 +59,7 @@ export default function TransactionForm({ incomeCategories, expenseCategories, o
     onAddTransaction(values);
     toast({
       title: "Success!",
-      description: "Your transaction has been added.",
+      description: "jangan boros-boros yah cantikk",
     });
     form.reset({
       type: "expense",
