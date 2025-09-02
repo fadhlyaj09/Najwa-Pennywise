@@ -59,22 +59,11 @@ export default function Dashboard() {
 
   // Effect to load data from localStorage
   useEffect(() => {
-    // Only run if we have a user and data hasn't been loaded yet.
+    // Only run if we have a user and data hasn't been loaded for this user yet.
     if (userEmail && !isLoaded) {
       const storedTransactionsJson = localStorage.getItem(transactionsKey!);
       const storedCategoriesJson = localStorage.getItem(categoriesKey!);
       const storedLimitJson = localStorage.getItem(limitKey!);
-
-      if (storedTransactionsJson) {
-        try {
-          setTransactions(JSON.parse(storedTransactionsJson));
-        } catch (e) { 
-          console.error("Failed to parse transactions:", e);
-          setTransactions([]);
-        }
-      } else {
-        setTransactions([]);
-      }
 
       let userCategories: Category[] = [];
       if (storedCategoriesJson) {
@@ -86,15 +75,27 @@ export default function Dashboard() {
       }
 
       // Check if fixed categories are present, if not, add them
-      const missingFixedCategories = fixedCategoriesData.filter(fc => !userCategories.some(uc => uc.name === fc.name && uc.type === fc.type));
+      const missingFixedCategories = fixedCategoriesData.filter(
+        fc => !userCategories.some(uc => uc.name === fc.name && uc.type === fc.type)
+      );
       
       let finalCategories = [...userCategories];
       if(missingFixedCategories.length > 0) {
-          finalCategories = [...userCategories, ...missingFixedCategories.map(c => ({...c, id: crypto.randomUUID()}))];
+          finalCategories = [...finalCategories, ...missingFixedCategories.map(c => ({...c, id: crypto.randomUUID()}))];
       }
-      
       setCategories(finalCategories);
       
+      if (storedTransactionsJson) {
+        try {
+          setTransactions(JSON.parse(storedTransactionsJson));
+        } catch (e) { 
+          console.error("Failed to parse transactions:", e);
+          setTransactions([]);
+        }
+      } else {
+        setTransactions([]);
+      }
+
       if (storedLimitJson) {
         try {
             setSpendingLimit(JSON.parse(storedLimitJson));
@@ -108,7 +109,7 @@ export default function Dashboard() {
       
       setIsLoaded(true);
     } else if (!userEmail) {
-      // If user logs out, reset the loaded state.
+      // If user logs out, reset the loaded state so data will reload for the next user.
       setIsLoaded(false);
       setTransactions([]);
       setCategories([]);
@@ -117,7 +118,7 @@ export default function Dashboard() {
 
   // Effect to save data to localStorage
   useEffect(() => {
-    // This guard is critical. Only saves when data has been loaded for a specific user.
+    // This guard is critical. Only save when data has been loaded for a specific user.
     if (!isLoaded || !transactionsKey || !categoriesKey || !limitKey) {
         return;
     }

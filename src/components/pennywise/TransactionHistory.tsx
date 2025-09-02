@@ -61,7 +61,7 @@ const TransactionHistory = ({ transactions, categories }: TransactionHistoryProp
                 <p className="text-muted-foreground">Add a transaction to get started.</p>
             </div>
           ) : (
-            <Accordion type="single" collapsible defaultValue={sortedDates[0]}>
+            <Accordion type="single" collapsible defaultValue={sortedDates.length > 0 ? sortedDates[0] : undefined}>
               {sortedDates.map((date) => (
                 <AccordionItem value={date} key={date}>
                   <AccordionTrigger>{date}</AccordionTrigger>
