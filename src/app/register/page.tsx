@@ -61,7 +61,7 @@ export default function RegisterPage() {
             <CardDescription>
               Buat akun baru untuk mulai melacak keuangan Anda.
             </CardDescription>
-          </CardHeader>
+          </Header>
           <form onSubmit={handleSubmit}>
             <CardContent className="grid gap-4">
               {error && (

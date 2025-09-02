@@ -3,6 +3,7 @@ import type { User } from '@/ai/flows/user-auth-flow';
 
 const SHEET_ID = process.env.SHEET_ID;
 const GOOGLE_SHEETS_CLIENT_EMAIL = process.env.GOOGLE_SHEETS_CLIENT_EMAIL;
+// IMPORTANT: Replace \\n with \n to correctly parse the private key from .env
 const GOOGLE_SHEETS_PRIVATE_KEY = process.env.GOOGLE_SHEETS_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
 const RANGE = 'A:B'; // Assuming Email is in column A and Password in column B
@@ -34,7 +35,10 @@ async function getSheetData() {
         return response.data.values || [];
     } catch (err) {
         console.error('The API returned an error: ' + err);
-        throw new Error('Failed to retrieve data from Google Sheet.');
+        if (err instanceof Error) {
+            throw new Error(`Failed to retrieve data from Google Sheet: ${err.message}`);
+        }
+        throw new Error('Failed to retrieve data from Google Sheet due to an unknown error.');
     }
 }
 
@@ -61,6 +65,9 @@ export async function appendUserToSheet(user: User): Promise<void> {
         });
     } catch (err) {
         console.error('The API returned an error: ' + err);
-        throw new Error('Failed to append data to Google Sheet.');
+        if (err instanceof Error) {
+            throw new Error(`Failed to append data to Google Sheet: ${err.message}`);
+        }
+        throw new Error('Failed to append data to Google Sheet due to an unknown error.');
     }
 }

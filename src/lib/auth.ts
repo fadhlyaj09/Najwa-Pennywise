@@ -16,7 +16,7 @@ export async function authenticate(email: string, pass: string): Promise<{succes
   } catch (error) {
     console.error("Error during authentication:", error);
     if (error instanceof Error) {
-        return { success: false, message: `Terjadi kesalahan pada server: ${error.message}` };
+        return { success: false, message: error.message };
     }
     return { success: false, message: 'Terjadi kesalahan pada server. Gagal terhubung ke Google Sheet.' };
   }
@@ -31,7 +31,7 @@ export async function registerUser(email: string, pass: string): Promise<{succes
     } catch (error) {
         console.error("Error during registration:", error);
         if (error instanceof Error) {
-            return { success: false, message: `Terjadi kesalahan pada server: ${error.message}` };
+            return { success: false, message: error.message };
         }
         return { success: false, message: 'Terjadi kesalahan saat mendaftar. Silakan coba lagi.' };
     }
