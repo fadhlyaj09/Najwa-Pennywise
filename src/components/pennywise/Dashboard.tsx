@@ -61,32 +61,25 @@ export default function Dashboard() {
   const limitKey = useMemo(() => userEmail ? `pennywise_limit_${userEmail}` : null, [userEmail]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && userEmail && transactionsKey && categoriesKey && limitKey) {
-      const storedCategoriesJson = localStorage.getItem(categoriesKey);
+    if (userEmail && transactionsKey && categoriesKey && limitKey) {
       const storedTransactionsJson = localStorage.getItem(transactionsKey);
-      const storedLimitJson = localStorage.getItem(limitKey);
-      
-      let storedCategories: Category[] = [];
-      if (storedCategoriesJson) {
-        try {
-          storedCategories = JSON.parse(storedCategoriesJson);
-        } catch (e) { console.error("Failed to parse categories:", e); }
-      }
-      
-      if (storedCategories.length === 0) {
-          const initialCategoriesWithId = initialCategoriesData.map(c => ({...c, id: crypto.randomUUID()}));
-          setCategories(initialCategoriesWithId);
-          localStorage.setItem(categoriesKey, JSON.stringify(initialCategoriesWithId));
-      } else {
-          setCategories(storedCategories);
-      }
-      
       if (storedTransactionsJson) {
         try {
           setTransactions(JSON.parse(storedTransactionsJson));
         } catch (e) { console.error("Failed to parse transactions:", e); }
       }
+
+      const storedCategoriesJson = localStorage.getItem(categoriesKey);
+      if (storedCategoriesJson) {
+        try {
+          setCategories(JSON.parse(storedCategoriesJson));
+        } catch (e) { console.error("Failed to parse categories:", e); }
+      } else {
+        const initialCategoriesWithId = initialCategoriesData.map(c => ({...c, id: crypto.randomUUID()}));
+        setCategories(initialCategoriesWithId);
+      }
       
+      const storedLimitJson = localStorage.getItem(limitKey);
       if (storedLimitJson) {
         try {
             setSpendingLimit(JSON.parse(storedLimitJson));

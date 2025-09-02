@@ -17,26 +17,36 @@ import DebtForm from "@/components/pennywise/DebtForm";
 import { useToast } from "@/hooks/use-toast";
 
 export default function DebtPage() {
-  const { logout, isAuthenticated, isLoading } = useAuth();
+  const { logout, isAuthenticated, isLoading, userEmail } = useAuth();
   const [debts, setDebts] = useState<Debt[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const storedDebts = localStorage.getItem("pennywise_debts");
-    if (storedDebts) {
-      try {
-        setDebts(JSON.parse(storedDebts));
-      } catch (e) {
-        console.error("Failed to parse debts from localStorage", e);
-        setDebts([]);
-      }
-    }
-  }, []);
+  const debtsKey = useMemo(() => userEmail ? `pennywise_debts_${userEmail}` : null, [userEmail]);
 
   useEffect(() => {
-    localStorage.setItem("pennywise_debts", JSON.stringify(debts));
-  }, [debts]);
+    if (userEmail && debtsKey) {
+      const storedDebts = localStorage.getItem(debtsKey);
+      if (storedDebts) {
+        try {
+          setDebts(JSON.parse(storedDebts));
+        } catch (e) {
+          console.error("Failed to parse debts from localStorage", e);
+          setDebts([]);
+        }
+      } else {
+        setDebts([]);
+      }
+      setIsLoaded(true);
+    }
+  }, [userEmail, debtsKey]);
+
+  useEffect(() => {
+    if (isLoaded && debtsKey) {
+      localStorage.setItem(debtsKey, JSON.stringify(debts));
+    }
+  }, [debts, isLoaded, debtsKey]);
 
   const addDebt = (debt: Omit<Debt, 'id' | 'status'>) => {
     const newDebt: Debt = { ...debt, id: crypto.randomUUID(), status: 'unpaid' };
