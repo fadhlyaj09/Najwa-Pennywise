@@ -48,7 +48,7 @@ export default function RegisterPage() {
         });
         router.push('/login');
     } else {
-        setError(result.message);
+        setError(result.message || 'Terjadi kesalahan yang tidak diketahui.');
     }
   };
 

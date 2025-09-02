@@ -7,7 +7,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 import { findUserByEmailInSheet, appendUserToSheet } from '@/lib/sheets';
 
 const UserSchema = z.object({
@@ -37,11 +37,18 @@ export const registerNewUser = ai.defineFlow(
         }),
     },
     async (userData) => {
-        const existingUser = await findUserByEmailInSheet(userData.email);
-        if (existingUser) {
-            return { success: false, message: 'Email sudah terdaftar.' };
+        try {
+            const existingUser = await findUserByEmailInSheet(userData.email);
+            if (existingUser) {
+                return { success: false, message: 'Email sudah terdaftar.' };
+            }
+            await appendUserToSheet(userData);
+            return { success: true, message: 'Pendaftaran berhasil!' };
+        } catch (error) {
+            if (error instanceof Error) {
+                return { success: false, message: error.message };
+            }
+            return { success: false, message: 'Terjadi kesalahan tidak diketahui saat mendaftar.'}
         }
-        await appendUserToSheet(userData);
-        return { success: true, message: 'Pendaftaran berhasil!' };
     }
 );
