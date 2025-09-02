@@ -7,7 +7,7 @@ import { AuthProvider } from '@/hooks/use-auth';
 const inter = Inter({ subsets: ['latin'], variable: '--font-body' })
 
 export const metadata: Metadata = {
-  title: 'Najwa Pennywise',
+  title: 'Pennywise',
   description: 'Your personal finance tracker',
 };
 

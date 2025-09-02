@@ -188,8 +188,8 @@ export default function Dashboard() {
         <div className="w-full max-w-5xl mx-auto flex h-16 items-center justify-between px-4">
           <NextLink href="/" passHref>
             <h1 className="text-xl md:text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent text-transparent bg-clip-text cursor-pointer">
-              <span className="md:hidden">Najwa</span>
-              <span className="hidden md:inline">Najwa Pennywise</span>
+              <span className="md:hidden">Pennywise</span>
+              <span className="hidden md:inline">Pennywise</span>
             </h1>
           </NextLink>
           <div className="flex items-center gap-2">
