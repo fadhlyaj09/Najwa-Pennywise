@@ -61,29 +61,48 @@ export default function Dashboard() {
   const limitKey = useMemo(() => userEmail ? `pennywise_limit_${userEmail}` : null, [userEmail]);
 
   useEffect(() => {
-    if (userEmail && transactionsKey && categoriesKey && limitKey) {
+    if (!userEmail) {
+      setIsLoaded(false);
+      setTransactions([]);
+      setCategories([]);
+      setSpendingLimit(5000000);
+      return;
+    };
+    
+    if (typeof window !== 'undefined' && transactionsKey && categoriesKey && limitKey) {
+      const storedCategoriesJson = localStorage.getItem(categoriesKey);
       const storedTransactionsJson = localStorage.getItem(transactionsKey);
+      const storedLimitJson = localStorage.getItem(limitKey);
+      
+      let storedCategories: Category[] = [];
+      if (storedCategoriesJson) {
+        try {
+          storedCategories = JSON.parse(storedCategoriesJson);
+        } catch (e) { console.error("Failed to parse categories:", e); }
+      }
+      
+      if (storedCategories.length === 0) {
+          const initialCategoriesWithId = initialCategoriesData.map(c => ({...c, id: crypto.randomUUID()}));
+          setCategories(initialCategoriesWithId);
+          localStorage.setItem(categoriesKey, JSON.stringify(initialCategoriesWithId));
+      } else {
+          setCategories(storedCategories);
+      }
+      
       if (storedTransactionsJson) {
         try {
           setTransactions(JSON.parse(storedTransactionsJson));
         } catch (e) { console.error("Failed to parse transactions:", e); }
-      }
-
-      const storedCategoriesJson = localStorage.getItem(categoriesKey);
-      if (storedCategoriesJson) {
-        try {
-          setCategories(JSON.parse(storedCategoriesJson));
-        } catch (e) { console.error("Failed to parse categories:", e); }
       } else {
-        const initialCategoriesWithId = initialCategoriesData.map(c => ({...c, id: crypto.randomUUID()}));
-        setCategories(initialCategoriesWithId);
+        setTransactions([]);
       }
       
-      const storedLimitJson = localStorage.getItem(limitKey);
       if (storedLimitJson) {
         try {
             setSpendingLimit(JSON.parse(storedLimitJson));
         } catch (e) { console.error("Failed to parse limit:", e); }
+      } else {
+        setSpendingLimit(5000000);
       }
       
       setIsLoaded(true);
@@ -91,11 +110,12 @@ export default function Dashboard() {
   }, [userEmail, transactionsKey, categoriesKey, limitKey]);
 
   useEffect(() => {
-    if (isLoaded && transactionsKey && categoriesKey && limitKey) {
-        localStorage.setItem(transactionsKey, JSON.stringify(transactions));
-        localStorage.setItem(categoriesKey, JSON.stringify(categories));
-        localStorage.setItem(limitKey, JSON.stringify(spendingLimit));
+    if (!isLoaded || !transactionsKey || !categoriesKey || !limitKey) {
+      return;
     }
+    localStorage.setItem(transactionsKey, JSON.stringify(transactions));
+    localStorage.setItem(categoriesKey, JSON.stringify(categories));
+    localStorage.setItem(limitKey, JSON.stringify(spendingLimit));
   }, [transactions, categories, spendingLimit, isLoaded, transactionsKey, categoriesKey, limitKey]);
 
   const addTransaction = (transaction: Omit<Transaction, "id">) => {
