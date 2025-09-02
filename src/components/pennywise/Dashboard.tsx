@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo } from "react";
 import NextLink from 'next/link';
 import { useRouter } from "next/navigation";
-import { PlusCircle, Tags, LogOut, BookUser, MoreVertical } from "lucide-react";
+import { PlusCircle, LogOut, BookUser, MoreVertical } from "lucide-react";
 import type { Transaction, Category } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import SummaryCards from "@/components/pennywise/SummaryCards";
@@ -17,7 +17,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 
-const initialCategoriesData: Category[] = [
+const fixedCategories: Category[] = [
     { id: 'income-1', name: 'Salary', icon: 'Landmark', type: 'income' },
     { id: 'expense-1', name: 'Breakfast', icon: 'Coffee', type: 'expense' },
     { id: 'expense-2', name: 'Lunch', icon: 'Utensils', type: 'expense' },
@@ -46,7 +46,7 @@ export default function Dashboard() {
   const { logout, userEmail } = useAuth();
   const router = useRouter();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [categories] = useState<Category[]>(initialCategoriesData);
+  const [categories] = useState<Category[]>(fixedCategories);
   const [spendingLimit, setSpendingLimit] = useState<number>(5000000);
   const [isLoaded, setIsLoaded] = useState(false);
   const { toast } = useToast();
@@ -55,7 +55,6 @@ export default function Dashboard() {
   const limitKey = useMemo(() => userEmail ? `pennywise_limit_${userEmail}` : null, [userEmail]);
 
   useEffect(() => {
-    // This effect now ONLY loads data. It will not clear state on logout.
     if (userEmail && transactionsKey && limitKey) {
       const storedTransactionsJson = localStorage.getItem(transactionsKey);
       const storedLimitJson = localStorage.getItem(limitKey);
@@ -83,6 +82,11 @@ export default function Dashboard() {
       }
       
       setIsLoaded(true);
+    } else if (!userEmail) {
+      // Clear state when user logs out
+      setTransactions([]);
+      setSpendingLimit(5000000);
+      setIsLoaded(false);
     }
   }, [userEmail, transactionsKey, limitKey]);
 

@@ -28,7 +28,7 @@ const formSchema = z.object({
   type: z.enum(["income", "expense"], { required_error: "Please select a transaction type." }),
   amount: z.coerce.number().positive({ message: "Amount must be positive." }),
   date: z.string().refine((val) => !isNaN(Date.parse(val)), { message: "Invalid date" }),
-  category: z.string().min(1, { message: "Please select or create a category." }),
+  category: z.string().min(1, { message: "Please select a category." }),
 });
 
 interface TransactionFormProps {
@@ -139,9 +139,9 @@ export default function TransactionForm({ incomeCategories, expenseCategories, o
                     >
                       {field.value
                         ? categories.find(
-                            (cat) => cat.name.toLowerCase() === field.value.toLowerCase()
+                            (cat) => cat.name === field.value
                           )?.name
-                        : "Select or type a category"}
+                        : "Select category"}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </FormControl>
@@ -149,21 +149,11 @@ export default function TransactionForm({ incomeCategories, expenseCategories, o
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                   <Command>
                     <CommandInput 
-                      placeholder="Search or create category..." 
-                      onValueChange={(search) => {
-                        // Allow creating a new category by typing it
-                        if (!categories.some(c => c.name.toLowerCase() === search.toLowerCase())) {
-                           field.onChange(search);
-                        }
-                      }}
+                      placeholder="Search category..." 
                     />
                     <CommandList>
                       <ScrollArea className="h-48">
-                        <CommandEmpty>
-                          {
-                            field.value ? `Create new category: "${field.value}"` : "No category found."
-                          }
-                        </CommandEmpty>
+                        <CommandEmpty>No category found.</CommandEmpty>
                         <CommandGroup>
                           {categories.map((cat) => (
                             <CommandItem
