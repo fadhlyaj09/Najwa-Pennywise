@@ -48,7 +48,7 @@ const successMessages = [
 ];
 
 export default function Dashboard() {
-  const { logout } = useAuth();
+  const { logout, userEmail } = useAuth();
   const router = useRouter();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -56,11 +56,15 @@ export default function Dashboard() {
   const [isLoaded, setIsLoaded] = useState(false);
   const { toast } = useToast();
 
-   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedCategoriesJson = localStorage.getItem("pennywise_categories");
-      const storedTransactionsJson = localStorage.getItem("pennywise_transactions");
-      const storedLimitJson = localStorage.getItem("pennywise_limit");
+  const transactionsKey = useMemo(() => userEmail ? `pennywise_transactions_${userEmail}` : null, [userEmail]);
+  const categoriesKey = useMemo(() => userEmail ? `pennywise_categories_${userEmail}` : null, [userEmail]);
+  const limitKey = useMemo(() => userEmail ? `pennywise_limit_${userEmail}` : null, [userEmail]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && userEmail && transactionsKey && categoriesKey && limitKey) {
+      const storedCategoriesJson = localStorage.getItem(categoriesKey);
+      const storedTransactionsJson = localStorage.getItem(transactionsKey);
+      const storedLimitJson = localStorage.getItem(limitKey);
       
       let storedCategories: Category[] = [];
       if (storedCategoriesJson) {
@@ -72,7 +76,7 @@ export default function Dashboard() {
       if (storedCategories.length === 0) {
           const initialCategoriesWithId = initialCategoriesData.map(c => ({...c, id: crypto.randomUUID()}));
           setCategories(initialCategoriesWithId);
-          localStorage.setItem("pennywise_categories", JSON.stringify(initialCategoriesWithId));
+          localStorage.setItem(categoriesKey, JSON.stringify(initialCategoriesWithId));
       } else {
           setCategories(storedCategories);
       }
@@ -91,15 +95,15 @@ export default function Dashboard() {
       
       setIsLoaded(true);
     }
-  }, []);
+  }, [userEmail, transactionsKey, categoriesKey, limitKey]);
 
   useEffect(() => {
-    if (isLoaded) {
-        localStorage.setItem("pennywise_transactions", JSON.stringify(transactions));
-        localStorage.setItem("pennywise_categories", JSON.stringify(categories));
-        localStorage.setItem("pennywise_limit", JSON.stringify(spendingLimit));
+    if (isLoaded && transactionsKey && categoriesKey && limitKey) {
+        localStorage.setItem(transactionsKey, JSON.stringify(transactions));
+        localStorage.setItem(categoriesKey, JSON.stringify(categories));
+        localStorage.setItem(limitKey, JSON.stringify(spendingLimit));
     }
-  }, [transactions, categories, spendingLimit, isLoaded]);
+  }, [transactions, categories, spendingLimit, isLoaded, transactionsKey, categoriesKey, limitKey]);
 
   const addTransaction = (transaction: Omit<Transaction, "id">) => {
     const categoryExists = categories.some(c => c.name.toLowerCase() === transaction.category.toLowerCase() && c.type === transaction.type);
@@ -188,8 +192,7 @@ export default function Dashboard() {
         <div className="w-full max-w-5xl mx-auto flex h-16 items-center justify-between px-4">
           <NextLink href="/" passHref>
             <h1 className="text-xl md:text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent text-transparent bg-clip-text cursor-pointer">
-              <span className="md:hidden">Pennywise</span>
-              <span className="hidden md:inline">Pennywise</span>
+              Najwa Pennywise
             </h1>
           </NextLink>
           <div className="flex items-center gap-2">

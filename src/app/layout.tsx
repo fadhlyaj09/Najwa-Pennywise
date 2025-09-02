@@ -1,3 +1,4 @@
+
 import type {Metadata} from 'next';
 import { Inter } from 'next/font/google'
 import './globals.css';
@@ -7,7 +8,7 @@ import { AuthProvider } from '@/hooks/use-auth';
 const inter = Inter({ subsets: ['latin'], variable: '--font-body' })
 
 export const metadata: Metadata = {
-  title: 'Pennywise',
+  title: 'Najwa Pennywise',
   description: 'Your personal finance tracker',
 };
 
