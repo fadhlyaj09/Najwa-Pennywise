@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo } from "react";
 import NextLink from 'next/link';
 import { useRouter } from "next/navigation";
-import { PlusCircle, LogOut, BookUser, MoreVertical } from "lucide-react";
+import { PlusCircle, Tags, LogOut, BookUser, MoreVertical } from "lucide-react";
 import type { Transaction, Category } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import SummaryCards from "@/components/pennywise/SummaryCards";
@@ -13,18 +13,20 @@ import WeeklyChart from "@/components/pennywise/WeeklyChart";
 import AiReport from "@/components/pennywise/AiReport";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import TransactionForm from "@/components/pennywise/TransactionForm";
+import CategoryManager from "@/components/pennywise/CategoryManager";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/use-auth";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 
-const fixedCategories: Category[] = [
-    { id: 'income-1', name: 'Salary', icon: 'Landmark', type: 'income' },
-    { id: 'expense-1', name: 'Breakfast', icon: 'Coffee', type: 'expense' },
-    { id: 'expense-2', name: 'Lunch', icon: 'Utensils', type: 'expense' },
-    { id: 'expense-3', name: 'Dinner', icon: 'UtensilsCrossed', type: 'expense' },
-    { id: 'expense-4', name: 'Snacking', icon: 'Cookie', type: 'expense' },
-    { id: 'expense-5', name: 'Hangout', icon: 'Users', type: 'expense' },
-    { id: 'expense-6', name: 'Monthly Shopping', icon: 'ShoppingBag', type: 'expense' },
+const fixedCategoriesData: Omit<Category, 'id'>[] = [
+    { name: 'Salary', icon: 'Landmark', type: 'income', isFixed: true },
+    { name: 'Breakfast', icon: 'Coffee', type: 'expense', isFixed: true },
+    { name: 'Lunch', icon: 'Utensils', type: 'expense', isFixed: true },
+    { name: 'Dinner', icon: 'UtensilsCrossed', type: 'expense', isFixed: true },
+    { name: 'Snacking', icon: 'Cookie', type: 'expense', isFixed: true },
+    { name: 'Hangout', icon: 'Users', type: 'expense', isFixed: true },
+    { name: 'Monthly Shopping', icon: 'ShoppingBag', type: 'expense', isFixed: true },
 ];
 
 const successMessages = [
@@ -46,24 +48,52 @@ export default function Dashboard() {
   const { logout, userEmail } = useAuth();
   const router = useRouter();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [categories] = useState<Category[]>(fixedCategories);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [spendingLimit, setSpendingLimit] = useState<number>(5000000);
   const [isLoaded, setIsLoaded] = useState(false);
   const { toast } = useToast();
 
   const transactionsKey = useMemo(() => userEmail ? `pennywise_transactions_${userEmail}` : null, [userEmail]);
+  const categoriesKey = useMemo(() => userEmail ? `pennywise_categories_${userEmail}` : null, [userEmail]);
   const limitKey = useMemo(() => userEmail ? `pennywise_limit_${userEmail}` : null, [userEmail]);
 
+  // Effect to load data from localStorage
   useEffect(() => {
-    if (userEmail && transactionsKey && limitKey) {
+    if (userEmail && transactionsKey && categoriesKey && limitKey) {
       const storedTransactionsJson = localStorage.getItem(transactionsKey);
+      const storedCategoriesJson = localStorage.getItem(categoriesKey);
       const storedLimitJson = localStorage.getItem(limitKey);
+
+      let userCategories: Category[] = [];
+      if (storedCategoriesJson) {
+          try {
+              userCategories = JSON.parse(storedCategoriesJson);
+          } catch (e) {
+              console.error("Failed to parse categories:", e);
+          }
+      }
+
+      // Check if fixed categories are present, if not, add them
+      const fixedCategoryNames = fixedCategoriesData.map(c => c.name);
+      const missingFixedCategories = fixedCategoriesData.filter(fc => !userCategories.some(uc => uc.name === fc.name && uc.type === fc.type));
       
+      let finalCategories = [...userCategories];
+      if(missingFixedCategories.length > 0) {
+          finalCategories = [...userCategories, ...missingFixedCategories.map(c => ({...c, id: crypto.randomUUID()}))];
+      }
+      
+      // If categories were empty initially, set them up
+      if (userCategories.length === 0) {
+        finalCategories = fixedCategoriesData.map(c => ({ ...c, id: crypto.randomUUID() }));
+      }
+
+      setCategories(finalCategories);
+
       if (storedTransactionsJson) {
         try {
           setTransactions(JSON.parse(storedTransactionsJson));
         } catch (e) { 
-          console.error("Failed to parse transactions:", e); 
+          console.error("Failed to parse transactions:", e);
           setTransactions([]);
         }
       } else {
@@ -74,7 +104,7 @@ export default function Dashboard() {
         try {
             setSpendingLimit(JSON.parse(storedLimitJson));
         } catch (e) { 
-            console.error("Failed to parse limit:", e); 
+            console.error("Failed to parse limit:", e);
             setSpendingLimit(5000000);
         }
       } else {
@@ -82,24 +112,27 @@ export default function Dashboard() {
       }
       
       setIsLoaded(true);
-    } else if (!userEmail) {
-      // Clear state when user logs out
-      setTransactions([]);
-      setSpendingLimit(5000000);
-      setIsLoaded(false);
     }
-  }, [userEmail, transactionsKey, limitKey]);
+  }, [userEmail, transactionsKey, categoriesKey, limitKey]);
 
+  // Effect to save data to localStorage
   useEffect(() => {
-    // This effect ONLY saves data. It has guards to prevent saving on logout.
-    if (!isLoaded || !transactionsKey || !limitKey) {
-        return; // Do not save if not loaded or keys are null (which happens on logout)
+    // This guard is critical to prevent data loss on logout.
+    // It only saves when data has been loaded for a specific user.
+    if (!isLoaded || !transactionsKey || !categoriesKey || !limitKey) {
+        return;
     }
     localStorage.setItem(transactionsKey, JSON.stringify(transactions));
+    localStorage.setItem(categoriesKey, JSON.stringify(categories));
     localStorage.setItem(limitKey, JSON.stringify(spendingLimit));
-  }, [transactions, spendingLimit, isLoaded, transactionsKey, limitKey]);
+  }, [transactions, categories, spendingLimit, isLoaded, transactionsKey, categoriesKey, limitKey]);
 
   const addTransaction = (transaction: Omit<Transaction, "id">) => {
+    // Auto-create category if it doesn't exist
+    const categoryExists = categories.some(c => c.name.toLowerCase() === transaction.category.toLowerCase() && c.type === transaction.type);
+    if (!categoryExists) {
+        addCategory({ name: transaction.category, icon: 'Tag', type: transaction.type, isFixed: false });
+    }
     const newTransaction = { ...transaction, id: crypto.randomUUID() };
     setTransactions(prev => [newTransaction, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     setTransactionFormOpen(false);
@@ -108,6 +141,54 @@ export default function Dashboard() {
     toast({
       title: "Success!",
       description: randomMessage,
+    });
+  };
+  
+  const addCategory = (category: Omit<Category, "id">) => {
+    setCategories(prev => {
+        const existingCategory = prev.find(c => c.name.toLowerCase() === category.name.toLowerCase() && c.type === category.type);
+        if (existingCategory) {
+           toast({
+             variant: 'destructive',
+             title: 'Category exists',
+             description: `Category "${category.name}" for ${category.type} already exists.`
+           });
+           return prev; 
+        }
+        const newCategory: Category = { ...category, id: crypto.randomUUID() };
+        return [...prev, newCategory];
+    });
+  };
+  
+  const deleteCategory = (id: string) => {
+    const categoryToDelete = categories.find(c => c.id === id);
+    if (!categoryToDelete) return;
+
+    // Prevent deleting fixed categories
+    if (categoryToDelete.isFixed) {
+        toast({
+            variant: "destructive",
+            title: "Cannot delete category",
+            description: `"${categoryToDelete.name}" is a default category and cannot be deleted.`
+        });
+        return;
+    }
+
+    const isCategoryInUse = transactions.some(t => t.category.toLowerCase() === categoryToDelete.name.toLowerCase() && t.type === categoryToDelete.type);
+    
+    if (isCategoryInUse) {
+        toast({
+            variant: "destructive",
+            title: "Cannot delete category",
+            description: `"${categoryToDelete.name}" is in use by one or more transactions.`
+        });
+        return;
+    }
+
+    setCategories(prev => prev.filter(c => c.id !== id));
+    toast({
+      title: 'Success!',
+      description: `Category "${categoryToDelete.name}" has been deleted.`
     });
   };
   
@@ -123,6 +204,7 @@ export default function Dashboard() {
   }, [transactions]);
 
   const [transactionFormOpen, setTransactionFormOpen] = useState(false);
+  const [categoryManagerOpen, setCategoryManagerOpen] = useState(false);
 
   const incomeCategories = useMemo(() => {
       return categories
@@ -174,6 +256,24 @@ export default function Dashboard() {
                     <BookUser className="h-5 w-5" />
                   </Button>
               </NextLink>
+
+              <Sheet open={categoryManagerOpen} onOpenChange={setCategoryManagerOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" aria-label="Manage Categories">
+                    <Tags className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent className="flex flex-col p-0">
+                  <SheetHeader className="p-4 border-b">
+                    <SheetTitle>Manage Categories</SheetTitle>
+                  </SheetHeader>
+                  <CategoryManager 
+                    categories={categories} 
+                    onAddCategory={addCategory} 
+                    onDeleteCategory={deleteCategory} 
+                  />
+                </SheetContent>
+              </Sheet>
               
               <Button variant="ghost" size="icon" aria-label="Logout" onClick={logout}>
                 <LogOut className="h-5 w-5" />
@@ -191,6 +291,10 @@ export default function Dashboard() {
                          <DropdownMenuItem onSelect={() => router.push('/debt')}>
                             <BookUser className="mr-2 h-4 w-4" />
                             <span>Manage Debt</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => setCategoryManagerOpen(true)}>
+                            <Tags className="mr-2 h-4 w-4" />
+                            <span>Manage Categories</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem onSelect={logout}>
                             <LogOut className="mr-2 h-4 w-4" />
@@ -215,7 +319,7 @@ export default function Dashboard() {
                 />
             </div>
           <div className="col-span-1 md:col-span-1 flex flex-col gap-6">
-            <TransactionHistory transactions={transactions} />
+            <TransactionHistory transactions={transactions} categories={categories} />
           </div>
           <div className="col-span-1 md:col-span-1 flex flex-col gap-6">
             <WeeklyChart transactions={transactions} />

@@ -5,38 +5,31 @@ import * as React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { Transaction } from "@/lib/types";
+import type { Transaction, Category } from "@/lib/types";
 import { format, parseISO } from "date-fns";
 import { type LucideIcon, ShoppingCart, Car, Landmark, Utensils, Coffee, UtensilsCrossed, Cookie, ShoppingBag, Users, Wifi, Tag } from 'lucide-react';
 
-const categoryIcons: { [key: string]: LucideIcon } = {
-    'Groceries': ShoppingCart,
-    'Transport': Car,
-    'Salary': Landmark,
-    'Breakfast': Coffee,
-    'Lunch': Utensils,
-    'Dinner': UtensilsCrossed,
-    'Snacks': Cookie,
-    'Snacking': Cookie,
-    'Monthly Shopping': ShoppingBag,
-    'Hangout': Users,
-    'Internet Quota': Wifi,
-    'Default': Tag,
+// A fallback map for icons
+const iconMap: { [key: string]: LucideIcon } = {
+    'shoppingcart': ShoppingCart, 'car': Car, 'landmark': Landmark, 'utensils': Utensils, 
+    'coffee': Coffee, 'utensilscrossed': UtensilsCrossed, 'cookie': Cookie, 
+    'shoppingbag': ShoppingBag, 'users': Users, 'wifi': Wifi, 'tag': Tag,
 };
 
-const getCategoryIcon = (categoryName: string) => {
-    // Find a case-insensitive match for the category name
-    const foundKey = Object.keys(categoryIcons).find(key => key.toLowerCase() === categoryName.toLowerCase());
-    const Icon = categoryIcons[foundKey || 'Default'];
+const getCategoryIcon = (categoryName: string, categories: Category[]) => {
+    const category = categories.find(c => c.name.toLowerCase() === categoryName.toLowerCase());
+    const iconName = category ? category.icon.toLowerCase() : 'tag';
+    const Icon = iconMap[iconName] || Tag;
     return <Icon className="h-5 w-5 mr-3 text-muted-foreground" />;
 };
 
 
 interface TransactionHistoryProps {
   transactions: Transaction[];
+  categories: Category[];
 }
 
-const TransactionHistory = ({ transactions }: TransactionHistoryProps) => {
+const TransactionHistory = ({ transactions, categories }: TransactionHistoryProps) => {
 
   const groupedTransactions = React.useMemo(() => 
     transactions.reduce((acc, t) => {
@@ -77,7 +70,7 @@ const TransactionHistory = ({ transactions }: TransactionHistoryProps) => {
                       {groupedTransactions[date].map((t) => (
                         <li key={t.id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
                           <div className="flex items-center">
-                            {getCategoryIcon(t.category)}
+                            {getCategoryIcon(t.category, categories)}
                             <span className="font-medium">{t.category}</span>
                           </div>
                           <span className={`font-semibold ${t.type === 'income' ? 'text-green-500' : 'text-red-500'}`}>

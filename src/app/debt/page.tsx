@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { format, parseISO } from "date-fns";
 import DebtForm from "@/components/pennywise/DebtForm";
 import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 export default function DebtPage() {
   const { logout, isAuthenticated, isLoading, userEmail } = useAuth();
@@ -39,9 +40,6 @@ export default function DebtPage() {
         setDebts([]);
       }
       setIsLoaded(true);
-    } else if (!userEmail) {
-      setDebts([]);
-      setIsLoaded(false);
     }
   }, [userEmail, debtsKey]);
 
@@ -81,7 +79,11 @@ export default function DebtPage() {
   }
 
   if (isLoading || !isAuthenticated) {
-    return null;
+     return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-10 w-10 animate-spin" />
+      </div>
+    );
   }
 
   return (

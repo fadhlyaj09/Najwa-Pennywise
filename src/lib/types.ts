@@ -1,3 +1,4 @@
+
 export interface Transaction {
   id: string;
   type: 'income' | 'expense';
@@ -11,6 +12,7 @@ export interface Category {
   name: string;
   icon: string;
   type: 'income' | 'expense';
+  isFixed?: boolean; // isFixed categories cannot be deleted
 }
 
 export interface Debt {
