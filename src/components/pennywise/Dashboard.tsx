@@ -61,61 +61,54 @@ export default function Dashboard() {
   const limitKey = useMemo(() => userEmail ? `pennywise_limit_${userEmail}` : null, [userEmail]);
 
   useEffect(() => {
-    if (!userEmail) {
-      setIsLoaded(false);
-      setTransactions([]);
-      setCategories([]);
-      setSpendingLimit(5000000);
-      return;
-    };
-    
-    if (typeof window !== 'undefined' && transactionsKey && categoriesKey && limitKey) {
-      const storedCategoriesJson = localStorage.getItem(categoriesKey);
+    // Only load data from localStorage if a user is logged in.
+    if (userEmail && transactionsKey && categoriesKey && limitKey) {
       const storedTransactionsJson = localStorage.getItem(transactionsKey);
-      const storedLimitJson = localStorage.getItem(limitKey);
-      
-      let storedCategories: Category[] = [];
-      if (storedCategoriesJson) {
-        try {
-          storedCategories = JSON.parse(storedCategoriesJson);
-        } catch (e) { console.error("Failed to parse categories:", e); }
-      }
-      
-      if (storedCategories.length === 0) {
-          const initialCategoriesWithId = initialCategoriesData.map(c => ({...c, id: crypto.randomUUID()}));
-          setCategories(initialCategoriesWithId);
-          localStorage.setItem(categoriesKey, JSON.stringify(initialCategoriesWithId));
-      } else {
-          setCategories(storedCategories);
-      }
-      
       if (storedTransactionsJson) {
         try {
           setTransactions(JSON.parse(storedTransactionsJson));
-        } catch (e) { console.error("Failed to parse transactions:", e); }
+        } catch (e) { console.error("Failed to parse transactions:", e); setTransactions([]); }
       } else {
         setTransactions([]);
       }
+
+      const storedCategoriesJson = localStorage.getItem(categoriesKey);
+      if (storedCategoriesJson) {
+        try {
+          setCategories(JSON.parse(storedCategoriesJson));
+        } catch (e) { console.error("Failed to parse categories:", e); }
+      } else {
+          const initialCategoriesWithId = initialCategoriesData.map(c => ({...c, id: crypto.randomUUID()}));
+          setCategories(initialCategoriesWithId);
+      }
       
+      const storedLimitJson = localStorage.getItem(limitKey);
       if (storedLimitJson) {
         try {
             setSpendingLimit(JSON.parse(storedLimitJson));
-        } catch (e) { console.error("Failed to parse limit:", e); }
+        } catch (e) { console.error("Failed to parse limit:", e); setSpendingLimit(5000000); }
       } else {
         setSpendingLimit(5000000);
       }
       
       setIsLoaded(true);
+    } else if (!userEmail) {
+      // If user logs out, clear the state
+      setTransactions([]);
+      setCategories([]);
+      setSpendingLimit(5000000);
+      setIsLoaded(false);
     }
   }, [userEmail, transactionsKey, categoriesKey, limitKey]);
 
   useEffect(() => {
-    if (!isLoaded || !transactionsKey || !categoriesKey || !limitKey) {
-      return;
+    // This effect handles SAVING data. It will only run if data is loaded and keys are valid.
+    // Crucially, it will not run on logout because the keys will become null.
+    if (isLoaded && transactionsKey && categoriesKey && limitKey) {
+        localStorage.setItem(transactionsKey, JSON.stringify(transactions));
+        localStorage.setItem(categoriesKey, JSON.stringify(categories));
+        localStorage.setItem(limitKey, JSON.stringify(spendingLimit));
     }
-    localStorage.setItem(transactionsKey, JSON.stringify(transactions));
-    localStorage.setItem(categoriesKey, JSON.stringify(categories));
-    localStorage.setItem(limitKey, JSON.stringify(spendingLimit));
   }, [transactions, categories, spendingLimit, isLoaded, transactionsKey, categoriesKey, limitKey]);
 
   const addTransaction = (transaction: Omit<Transaction, "id">) => {
