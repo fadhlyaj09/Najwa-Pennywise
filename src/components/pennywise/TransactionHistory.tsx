@@ -18,7 +18,7 @@ const iconMap: { [key: string]: LucideIcon } = {
 
 const getCategoryIcon = (categoryName: string, categories: Category[]) => {
     const category = categories.find(c => c.name.toLowerCase() === categoryName.toLowerCase());
-    const iconName = category ? category.icon.toLowerCase() : 'tag';
+    const iconName = category?.icon?.toLowerCase() || 'tag';
     const Icon = iconMap[iconName] || Tag;
     return <Icon className="h-5 w-5 mr-3 text-muted-foreground" />;
 };

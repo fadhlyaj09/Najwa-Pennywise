@@ -53,7 +53,7 @@ const CategoryManager = ({ categories, onAddCategory, onDeleteCategory }: Catego
   });
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    onAddCategory(values);
+    onAddCategory({ ...values, isFixed: false });
     form.reset();
   }
 

@@ -74,7 +74,6 @@ export default function Dashboard() {
       }
 
       // Check if fixed categories are present, if not, add them
-      const fixedCategoryNames = fixedCategoriesData.map(c => c.name);
       const missingFixedCategories = fixedCategoriesData.filter(fc => !userCategories.some(uc => uc.name === fc.name && uc.type === fc.type));
       
       let finalCategories = [...userCategories];
