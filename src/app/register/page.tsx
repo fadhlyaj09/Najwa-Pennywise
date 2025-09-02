@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, FormEvent } from 'react';
@@ -68,7 +69,7 @@ export default function RegisterPage() {
             <CardDescription>
               Buat akun baru untuk mulai melacak keuangan Anda.
             </CardDescription>
-          </Header>
+          </CardHeader>
           <form onSubmit={handleSubmit}>
             <CardContent className="grid gap-4">
               {error && (
