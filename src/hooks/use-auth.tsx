@@ -7,7 +7,7 @@ import { authenticate } from '@/lib/auth';
 interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, pass: string) => Promise<boolean>;
+  login: (email: string, pass: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
 }
 
@@ -28,15 +28,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  const login = async (email: string, pass: string): Promise<boolean> => {
-    const success = await authenticate(email, pass);
-    if (success) {
+  const login = async (email: string, pass: string): Promise<{ success: boolean; message?: string }> => {
+    const result = await authenticate(email, pass);
+    if (result.success) {
       setIsAuthenticated(true);
       // In a real app, you'd get a token from the backend
       localStorage.setItem('auth_token', 'fake-jwt-token');
-      return true;
+      return { success: true };
     }
-    return false;
+    return { success: false, message: result.message };
   };
 
   const logout = () => {

@@ -3,21 +3,23 @@
 // In a real application, this would be handled by a backend service.
 import { findUserByEmail, registerNewUser } from "@/ai/flows/user-auth-flow";
 
-export async function authenticate(email: string, pass: string): Promise<boolean> {
+export async function authenticate(email: string, pass: string): Promise<{success: boolean, message?: string}> {
   // Simulate network delay
   await new Promise(resolve => setTimeout(resolve, 500));
 
   try {
     const user = await findUserByEmail(email.toLowerCase());
     if (user && user.password === pass) {
-      return true;
+      return { success: true };
     }
+    return { success: false, message: "Email atau kata sandi salah." };
   } catch (error) {
     console.error("Error during authentication:", error);
-    // Fallback to local user if sheets auth fails, useful for development
+    if (error instanceof Error) {
+        return { success: false, message: `Terjadi kesalahan pada server: ${error.message}` };
+    }
+    return { success: false, message: 'Terjadi kesalahan pada server. Gagal terhubung ke Google Sheet.' };
   }
-  
-  return false;
 }
 
 export async function registerUser(email: string, pass: string): Promise<{success: boolean, message: string}> {

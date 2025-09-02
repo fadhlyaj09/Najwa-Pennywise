@@ -30,13 +30,13 @@ export default function LoginPage() {
     setError('');
     setIsLoading(true);
     
-    const success = await login(email, password);
+    const result = await login(email, password);
     
     setIsLoading(false);
-    if (success) {
+    if (result.success) {
       router.push('/');
     } else {
-      setError('Email atau kata sandi salah. Silakan coba lagi.');
+      setError(result.message || 'Email atau kata sandi salah. Silakan coba lagi.');
     }
   };
 
