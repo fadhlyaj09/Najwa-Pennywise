@@ -37,18 +37,25 @@ export default function RegisterPage() {
 
     setIsLoading(true);
 
-    const result = await registerUser(email, password);
-
-    setIsLoading(false);
-
-    if (result.success) {
-        toast({
-            title: 'Pendaftaran Berhasil!',
-            description: 'Anda sekarang dapat login dengan akun Anda.',
-        });
-        router.push('/login');
-    } else {
-        setError(result.message || 'Terjadi kesalahan yang tidak diketahui.');
+    try {
+        const result = await registerUser(email, password);
+        if (result.success) {
+            toast({
+                title: 'Pendaftaran Berhasil!',
+                description: 'Anda sekarang dapat login dengan akun Anda.',
+            });
+            router.push('/login');
+        } else {
+            setError(result.message || 'Terjadi kesalahan yang tidak diketahui.');
+        }
+    } catch (err) {
+        if (err instanceof Error) {
+            setError(err.message);
+        } else {
+            setError('Terjadi kesalahan yang tidak terduga saat mendaftar.');
+        }
+    } finally {
+        setIsLoading(false);
     }
   };
 
