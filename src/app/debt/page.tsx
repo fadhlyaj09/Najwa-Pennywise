@@ -27,8 +27,8 @@ export default function DebtPage() {
   const debtsKey = useMemo(() => userEmail ? `pennywise_debts_${userEmail}` : null, [userEmail]);
 
   useEffect(() => {
-    if (userEmail && debtsKey) {
-      const storedDebts = localStorage.getItem(debtsKey);
+    if (userEmail && !isLoaded) {
+      const storedDebts = localStorage.getItem(debtsKey!);
       if (storedDebts) {
         try {
           setDebts(JSON.parse(storedDebts));
@@ -40,8 +40,11 @@ export default function DebtPage() {
         setDebts([]);
       }
       setIsLoaded(true);
+    } else if (!userEmail) {
+      setIsLoaded(false);
+      setDebts([]);
     }
-  }, [userEmail, debtsKey]);
+  }, [userEmail, isLoaded, debtsKey]);
 
   useEffect(() => {
     if (isLoaded && debtsKey) {

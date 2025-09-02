@@ -59,10 +59,22 @@ export default function Dashboard() {
 
   // Effect to load data from localStorage
   useEffect(() => {
-    if (userEmail && transactionsKey && categoriesKey && limitKey) {
-      const storedTransactionsJson = localStorage.getItem(transactionsKey);
-      const storedCategoriesJson = localStorage.getItem(categoriesKey);
-      const storedLimitJson = localStorage.getItem(limitKey);
+    // Only run if we have a user and data hasn't been loaded yet.
+    if (userEmail && !isLoaded) {
+      const storedTransactionsJson = localStorage.getItem(transactionsKey!);
+      const storedCategoriesJson = localStorage.getItem(categoriesKey!);
+      const storedLimitJson = localStorage.getItem(limitKey!);
+
+      if (storedTransactionsJson) {
+        try {
+          setTransactions(JSON.parse(storedTransactionsJson));
+        } catch (e) { 
+          console.error("Failed to parse transactions:", e);
+          setTransactions([]);
+        }
+      } else {
+        setTransactions([]);
+      }
 
       let userCategories: Category[] = [];
       if (storedCategoriesJson) {
@@ -81,23 +93,7 @@ export default function Dashboard() {
           finalCategories = [...userCategories, ...missingFixedCategories.map(c => ({...c, id: crypto.randomUUID()}))];
       }
       
-      // If categories were empty initially, set them up
-      if (userCategories.length === 0) {
-        finalCategories = fixedCategoriesData.map(c => ({ ...c, id: crypto.randomUUID() }));
-      }
-
       setCategories(finalCategories);
-
-      if (storedTransactionsJson) {
-        try {
-          setTransactions(JSON.parse(storedTransactionsJson));
-        } catch (e) { 
-          console.error("Failed to parse transactions:", e);
-          setTransactions([]);
-        }
-      } else {
-        setTransactions([]);
-      }
       
       if (storedLimitJson) {
         try {
@@ -111,13 +107,17 @@ export default function Dashboard() {
       }
       
       setIsLoaded(true);
+    } else if (!userEmail) {
+      // If user logs out, reset the loaded state.
+      setIsLoaded(false);
+      setTransactions([]);
+      setCategories([]);
     }
-  }, [userEmail, transactionsKey, categoriesKey, limitKey]);
+  }, [userEmail, isLoaded, transactionsKey, categoriesKey, limitKey]);
 
   // Effect to save data to localStorage
   useEffect(() => {
-    // This guard is critical to prevent data loss on logout.
-    // It only saves when data has been loaded for a specific user.
+    // This guard is critical. Only saves when data has been loaded for a specific user.
     if (!isLoaded || !transactionsKey || !categoriesKey || !limitKey) {
         return;
     }
@@ -143,7 +143,7 @@ export default function Dashboard() {
     });
   };
   
-  const addCategory = (category: Omit<Category, "id">) => {
+  const addCategory = (category: Omit<Category, "id" | 'isFixed'>) => {
     setCategories(prev => {
         const existingCategory = prev.find(c => c.name.toLowerCase() === category.name.toLowerCase() && c.type === category.type);
         if (existingCategory) {
@@ -154,7 +154,7 @@ export default function Dashboard() {
            });
            return prev; 
         }
-        const newCategory: Category = { ...category, id: crypto.randomUUID() };
+        const newCategory: Category = { ...category, id: crypto.randomUUID(), isFixed: false };
         return [...prev, newCategory];
     });
   };

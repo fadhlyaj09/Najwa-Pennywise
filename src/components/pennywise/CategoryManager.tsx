@@ -53,11 +53,13 @@ const CategoryManager = ({ categories, onAddCategory, onDeleteCategory }: Catego
   });
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    onAddCategory({ ...values, isFixed: false });
+    onAddCategory(values);
     form.reset();
   }
 
   const sortedCategories = [...categories].sort((a, b) => {
+    if (a.isFixed && !b.isFixed) return -1;
+    if (!a.isFixed && b.isFixed) return 1;
     if (a.type === b.type) {
       return a.name.localeCompare(b.name);
     }
