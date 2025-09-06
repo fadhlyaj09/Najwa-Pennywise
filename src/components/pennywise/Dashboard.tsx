@@ -59,7 +59,6 @@ export default function Dashboard() {
 
   // Effect to load data from localStorage
   useEffect(() => {
-    // Only run if we have a user and data hasn't been loaded for this user yet.
     if (userEmail && !isLoaded) {
       const storedTransactionsJson = localStorage.getItem(transactionsKey!);
       const storedCategoriesJson = localStorage.getItem(categoriesKey!);
