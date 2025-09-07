@@ -113,18 +113,37 @@ export default function Dashboard() {
   }, [userEmail, toast]);
 
 
-  const saveData = useCallback((
-    newTransactions: Transaction[],
-    newCategories: Category[],
-    newLimit: number,
-    newDebts: Debt[],
+ const saveData = useCallback((
+    newTransactions: Transaction[] | ((prev: Transaction[]) => Transaction[]),
+    newCategories: Category[] | ((prev: Category[]) => Category[]),
+    newLimit: number | ((prev: number) => number),
+    newDebts: Debt[] | ((prev: Debt[]) => Debt[])
   ) => {
       if (!userEmail) return;
-      setTransactions(newTransactions);
-      setCategories(newCategories);
-      setSpendingLimit(newLimit);
-      setDebts(newDebts);
-      debouncedSave(userEmail, newTransactions, newCategories, newLimit, newDebts);
+      
+      let finalTransactions: Transaction[] = [];
+      let finalCategories: Category[] = [];
+      let finalLimit: number = 0;
+      let finalDebts: Debt[] = [];
+
+      setTransactions(prev => {
+          finalTransactions = typeof newTransactions === 'function' ? newTransactions(prev) : newTransactions;
+          return finalTransactions;
+      });
+      setCategories(prev => {
+          finalCategories = typeof newCategories === 'function' ? newCategories(prev) : newCategories;
+          return finalCategories;
+      });
+      setSpendingLimit(prev => {
+          finalLimit = typeof newLimit === 'function' ? newLimit(prev) : newLimit;
+          return finalLimit;
+      });
+      setDebts(prev => {
+          finalDebts = typeof newDebts === 'function' ? newDebts(prev) : newDebts;
+          return finalDebts;
+      });
+
+      debouncedSave(userEmail, finalTransactions, finalCategories, finalLimit, finalDebts);
   }, [userEmail, debouncedSave]);
   
 
@@ -383,5 +402,6 @@ export default function Dashboard() {
     </div>
   );
 }
+
 
     
