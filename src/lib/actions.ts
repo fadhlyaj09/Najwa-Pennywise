@@ -7,6 +7,7 @@ import {
     getUserDataFromSheet,
     writeUserDataToSheet
 } from '@/lib/sheets';
+import { format } from "date-fns";
 
 export async function generateMonthlyReportAction(
   income: number,
@@ -91,3 +92,42 @@ export async function saveDebts(email: string, debts: Debt[]): Promise<{ success
     return { success: false, error: `Sync Error: ${errorMessage}` };
   }
 }
+
+
+export async function settleDebtAction(email: string, debtId: string): Promise<{ success: boolean, error?: string, debts?: Debt[] }> {
+    try {
+        const { transactions, categories, spendingLimit, debts } = await getUserDataFromSheet(email);
+
+        const debtToSettle = debts.find(d => d.id === debtId);
+        if (!debtToSettle || debtToSettle.status === 'paid') {
+            return { success: false, error: "Debt not found or already paid." };
+        }
+
+        // 1. Create a new income transaction
+        const newTransaction: Transaction = {
+            id: crypto.randomUUID(),
+            type: 'income',
+            category: 'Debt Repayment',
+            amount: debtToSettle.amount,
+            date: format(new Date(), "yyyy-MM-dd"),
+        };
+        const updatedTransactions = [...transactions, newTransaction];
+
+        // 2. Update the debt status
+        const updatedDebts = debts.map(d => 
+            d.id === debtId ? { ...d, status: 'paid' as const } : d
+        );
+
+        // 3. Save everything back to the sheet
+        await writeUserDataToSheet(email, updatedTransactions, categories, spendingLimit, updatedDebts);
+
+        return { success: true, debts: updatedDebts };
+
+    } catch (error) {
+        console.error("Error settling debt:", error);
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        return { success: false, error: `Settle Debt Error: ${errorMessage}` };
+    }
+}
+
+    

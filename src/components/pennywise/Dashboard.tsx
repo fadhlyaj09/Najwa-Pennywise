@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import NextLink from 'next/link';
 import { useRouter } from "next/navigation";
-import { PlusCircle, Tags, LogOut, BookUser, MoreVertical, Loader2, Cloud, CloudOff } from "lucide-react";
+import { PlusCircle, Tags, LogOut, BookUser, MoreVertical, Loader2, Cloud, CloudOff, Repeat } from "lucide-react";
 import type { Transaction, Category } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import SummaryCards from "@/components/pennywise/SummaryCards";
@@ -24,6 +24,7 @@ import { useDebouncedCallback } from "use-debounce";
 
 const fixedCategoriesData: Omit<Category, 'id'>[] = [
     { name: 'Salary', icon: 'Landmark', type: 'income', isFixed: true },
+    { name: 'Debt Repayment', icon: 'Repeat', type: 'income', isFixed: true },
     { name: 'Breakfast', icon: 'Coffee', type: 'expense', isFixed: true },
     { name: 'Lunch', icon: 'Utensils', type: 'expense', isFixed: true },
     { name: 'Dinner', icon: 'UtensilsCrossed', type: 'expense', isFixed: true },
@@ -348,3 +349,5 @@ export default function Dashboard() {
     </div>
   );
 }
+
+    

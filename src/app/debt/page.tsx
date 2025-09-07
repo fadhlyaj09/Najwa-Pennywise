@@ -16,7 +16,7 @@ import { format, parseISO } from "date-fns";
 import DebtForm from "@/components/pennywise/DebtForm";
 import { useToast } from "@/hooks/use-toast";
 import { formatRupiah } from "@/lib/utils";
-import { getDebts, saveDebts } from "@/lib/actions";
+import { getDebts, saveDebts, settleDebtAction } from "@/lib/actions";
 import { useDebouncedCallback } from "use-debounce";
 
 
@@ -95,13 +95,34 @@ export default function DebtPage() {
     });
   };
 
-  const markAsPaid = (id: string) => {
-    const updatedDebts = debts.map(d => d.id === id ? { ...d, status: 'paid' } : d);
-    saveData(updatedDebts);
-    toast({
-        title: "Debt Settled!",
-        description: "The debt has been marked as paid."
-    });
+  const markAsPaid = async (debtId: string) => {
+    if (!userEmail) return;
+
+    // Optimistic UI update
+    const originalDebts = debts;
+    const updatedDebts = debts.map(d => d.id === debtId ? { ...d, status: 'paid' } : d);
+    setDebts(updatedDebts);
+
+    const result = await settleDebtAction(userEmail, debtId);
+
+    if (result.success) {
+        toast({
+            title: "Debt Settled!",
+            description: "The debt has been marked as paid and an income transaction has been created."
+        });
+        // Optionally re-sync or trust optimistic update. For now, we trust it.
+        if (result.debts) {
+          setDebts(result.debts);
+        }
+    } else {
+        // Rollback on failure
+        setDebts(originalDebts);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: result.error || "Could not settle the debt."
+        });
+    }
   };
 
   const { unpaidDebts, paidDebts, totalUnpaid } = useMemo(() => {
@@ -244,3 +265,5 @@ export default function DebtPage() {
     </div>
   );
 }
+
+    
