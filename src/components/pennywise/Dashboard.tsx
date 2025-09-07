@@ -8,7 +8,7 @@ HEAD
 import { PlusCircle, Tags, LogOut, BookUser, MoreVertical, Loader2, Cloud, CloudOff, Repeat } from "lucide-react";
 
 import { PlusCircle, Tags, LogOut, BookUser, MoreVertical, Loader2, Cloud, CloudOff } from "lucide-react";
-5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
+
 import type { Transaction, Category, Debt } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import SummaryCards from "@/components/pennywise/SummaryCards";
