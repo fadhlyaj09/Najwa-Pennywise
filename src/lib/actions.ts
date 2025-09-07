@@ -355,4 +355,9 @@ export async function deleteDebtAction(debtToDelete: Debt): Promise<{ success: b
         return { success: false, error: `Delete Debt Error: ${errorMessage}` };
     }
 }
+<<<<<<< HEAD
 >>>>>>> faea11d (kalo semisal kita salah input data debt, apakah kita menghapus history d)
+=======
+
+    
+>>>>>>> f228435 (masih blm ada loh)

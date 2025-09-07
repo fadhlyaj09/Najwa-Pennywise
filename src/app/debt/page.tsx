@@ -1,4 +1,4 @@
-
+git add .
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -306,3 +306,7 @@ export default function DebtPage() {
   );
 }
 
+<<<<<<< HEAD
+=======
+    
+>>>>>>> f228435 (masih blm ada loh)
