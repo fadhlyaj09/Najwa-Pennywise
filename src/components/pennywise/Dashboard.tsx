@@ -6,7 +6,7 @@ import NextLink from 'next/link';
 import { useRouter } from "next/navigation";
 HEAD
 import { PlusCircle, Tags, LogOut, BookUser, MoreVertical, Loader2, Cloud, CloudOff, Repeat } from "lucide-react";
-=======
+
 import { PlusCircle, Tags, LogOut, BookUser, MoreVertical, Loader2, Cloud, CloudOff } from "lucide-react";
 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
 import type { Transaction, Category, Debt } from "@/lib/types";
@@ -35,7 +35,7 @@ import {
     deleteCategoryAction,
     setSpendingLimitAction,
 } from "@/lib/actions";
-5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
+
 
 const fixedCategoriesData: Omit<Category, 'id'>[] = [
     { name: 'Salary', icon: 'Landmark', type: 'income', isFixed: true },
@@ -90,7 +90,7 @@ HEAD
 
 
 
-5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
+
   useEffect(() => {
     if (!userEmail) {
         setIsLoading(false);
@@ -130,7 +130,7 @@ HEAD
                 }
             });
             setCategories(newCategories);
-5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
+
 
         } else {
             setError(result.error || 'Failed to load data.');
@@ -193,7 +193,7 @@ HEAD
     setIsSyncing(true);
 dc8a151 (error saat hapus Debt Repayment)
     const categoryExists = categories.some(c => c.name.toLowerCase() === transactionData.category.toLowerCase() && c.type === transactionData.type);
-5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
+
     if (!categoryExists) {
         const catResult = await addCategoryAction(userEmail, { name: transactionData.category, type: transactionData.type });
         if (catResult.success && catResult.category) {
@@ -274,7 +274,7 @@ HEAD
     } else {
         toast({ variant: 'destructive', title: 'Error', description: result.error });
     }
-5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
+
   };
 
   const addCategory = async (categoryData: Omit<Category, "id" | 'isFixed' | 'icon'>) => {
@@ -300,7 +300,7 @@ HEAD
     } else {
         toast({ variant: 'destructive', title: 'Error', description: result.error });
     }
-5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
+
   };
 
   const deleteCategory = async (id: string) => {
@@ -351,7 +351,7 @@ HEAD
     } else {
         toast({ variant: 'destructive', title: 'Error', description: result.error });
     }
-5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
+
   };
 
   const { income, expenses, balance } = useMemo(() => {
@@ -508,4 +508,4 @@ HEAD
 
 
     
-git commit -m "Memperbaiki sisa konflik merge"5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
+
