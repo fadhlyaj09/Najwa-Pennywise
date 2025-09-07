@@ -1,4 +1,4 @@
-git add .
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -69,11 +69,11 @@ export default function DebtPage() {
   }, [userEmail, isAuthenticated, isAuthLoading, toast]);
 
 
-<<<<<<< HEAD
+HEAD
   const addDebt = async (debtData: Omit<Debt, 'id' | 'status' | 'lendingTransactionId' | 'repaymentTransactionId'>) => {
-=======
+
   const addDebt = async (debtData: Omit<Debt, 'id' | 'status' | 'icon'>) => {
->>>>>>> 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
+
     if (!userEmail) return;
 
     setIsSyncing(true);
