@@ -1,3 +1,4 @@
+
 import { google } from 'googleapis';
 import type { User } from '@/ai/flows/user-auth-flow';
 import type { Transaction, Category, Debt } from '@/lib/types';
@@ -13,9 +14,9 @@ const DEBT_SHEET_NAME = 'Debts';
 const SETTINGS_SHEET_NAME = 'Settings';
 
 const USER_RANGE = `${USER_SHEET_NAME}!A:B`;
-const TRANSACTION_RANGE = `${TRANSACTION_SHEET_NAME}!A:F`;
-const CATEGORY_RANGE = `${CATEGORY_SHEET_NAME}!A:E`;
-const DEBT_RANGE = `${DEBT_SHEET_NAME}!A:F`;
+const TRANSACTION_RANGE = `${TRANSACTION_SHEET_NAME}!A:F`; 
+const CATEGORY_RANGE = `${CATEGORY_SHEET_NAME}!A:F`;
+const DEBT_RANGE = `${DEBT_SHEET_NAME}!A:G`;
 const SETTINGS_RANGE = `${SETTINGS_SHEET_NAME}!A:B`;
 
 async function getSheetsService() {
@@ -46,7 +47,8 @@ async function getSheetData(range: string) {
     } catch (err) {
         console.error(`The API returned an error for range ${range}: ` + err);
         if (err instanceof Error) {
-            throw new Error(`Failed to retrieve data from ${range}: ${err.message}`);
+            const message = (err as any).errors?.[0]?.message || err.message;
+            throw new Error(`Failed to retrieve data from ${range}: ${message}`);
         }
         throw new Error(`Failed to retrieve data from ${range} due to an unknown error.`);
     }
@@ -98,8 +100,10 @@ export async function getUserDataFromSheet(email: string) {
         getSheetData(DEBT_RANGE),
     ]);
 
+    const lowercasedEmail = email.toLowerCase();
+
     const userTransactions = allTransactions.slice(1) // skip header
-        .filter(row => row[0]?.toLowerCase() === email.toLowerCase())
+        .filter(row => row[0]?.toLowerCase() === lowercasedEmail)
         .map(row => ({
             id: row[1],
             type: row[2],
@@ -109,19 +113,20 @@ export async function getUserDataFromSheet(email: string) {
         } as Transaction));
 
     const userCategories = allCategories.slice(1)
-        .filter(row => row[0]?.toLowerCase() === email.toLowerCase())
+        .filter(row => row[0]?.toLowerCase() === lowercasedEmail)
         .map(row => ({
             id: row[1],
             name: row[2],
             icon: row[3],
             type: row[4],
+            isFixed: row[5] === 'TRUE',
         } as Category));
 
-    const userSettingsRow = allSettings.slice(1).find(row => row[0]?.toLowerCase() === email.toLowerCase());
+    const userSettingsRow = allSettings.slice(1).find(row => row[0]?.toLowerCase() === lowercasedEmail);
     const spendingLimit = userSettingsRow ? parseFloat(userSettingsRow[1]) : 5000000;
 
     const userDebts = allDebts.slice(1)
-        .filter(row => row[0]?.toLowerCase() === email.toLowerCase())
+        .filter(row => row[0]?.toLowerCase() === lowercasedEmail)
         .map(row => ({
             id: row[1],
             debtorName: row[2],
@@ -140,23 +145,34 @@ export async function getUserDataFromSheet(email: string) {
 }
 
 
-export async function writeUserDataToSheet(email: string, transactions: Transaction[], categories: Category[], limit: number, debts: Debt[]) {
+export async function writeUserDataToSheet(
+    email: string, 
+    transactions: Transaction[], 
+    categories: Category[], 
+    limit: number, 
+    debts: Debt[]
+) {
     const sheets = await getSheetsService();
     const lowercasedEmail = email.toLowerCase();
 
     // Fetch all existing data first
-    const [allTransactions, allCategories, allSettings, allDebts] = await Promise.all([
+    const [
+        allTransactions, 
+        allCategories, 
+        allSettings, 
+        allDebts
+    ] = await Promise.all([
         getSheetData(TRANSACTION_RANGE),
         getSheetData(CATEGORY_RANGE),
         getSheetData(SETTINGS_RANGE),
         getSheetData(DEBT_RANGE),
     ]);
 
-    // Filter out data for the current user to replace it with the new data
-    const otherUsersTransactions = allTransactions.slice(1).filter(row => row[0]?.toLowerCase() !== lowercasedEmail);
-    const otherUsersCategories = allCategories.slice(1).filter(row => row[0]?.toLowerCase() !== lowercasedEmail);
-    const otherUsersSettings = allSettings.slice(1).filter(row => row[0]?.toLowerCase() !== lowercasedEmail);
-    const otherUsersDebts = allDebts.slice(1).filter(row => row[0]?.toLowerCase() !== lowercasedEmail);
+    // Filter out data for other users
+    const otherUsersTransactions = allTransactions.slice(1).filter(row => row.length > 0 && row[0]?.toLowerCase() !== lowercasedEmail);
+    const otherUsersCategories = allCategories.slice(1).filter(row => row.length > 0 && row[0]?.toLowerCase() !== lowercasedEmail);
+    const otherUsersSettings = allSettings.slice(1).filter(row => row.length > 0 && row[0]?.toLowerCase() !== lowercasedEmail);
+    const otherUsersDebts = allDebts.slice(1).filter(row => row.length > 0 && row[0]?.toLowerCase() !== lowercasedEmail);
 
     // Prepare new data for the current user
     const newTransactionRows = transactions.map(t => [lowercasedEmail, t.id, t.type, t.category, t.amount, t.date]);
@@ -164,15 +180,25 @@ export async function writeUserDataToSheet(email: string, transactions: Transact
     const newSettingsRow = [lowercasedEmail, limit];
     const newDebtRows = debts.map(d => [lowercasedEmail, d.id, d.debtorName, d.amount, d.description, d.dueDate, d.status]);
 
-
-    // Combine other users' data with the new data for the current user
+    // Combine headers, other users' data, and new data for the current user
     const finalTransactions = [allTransactions[0], ...otherUsersTransactions, ...newTransactionRows];
     const finalCategories = [allCategories[0], ...otherUsersCategories, ...newCategoryRows];
     const finalSettings = [allSettings[0], ...otherUsersSettings, newSettingsRow];
     const finalDebts = [allDebts[0], ...otherUsersDebts, ...newDebtRows];
-
-    // Clear and write data back to sheets
+    
     try {
+        await sheets.spreadsheets.values.batchClear({
+            spreadsheetId: SHEET_ID,
+            requestBody: {
+                ranges: [
+                    TRANSACTION_RANGE,
+                    CATEGORY_RANGE,
+                    SETTINGS_RANGE,
+                    DEBT_RANGE,
+                ]
+            }
+       });
+
         await sheets.spreadsheets.values.batchUpdate({
             spreadsheetId: SHEET_ID,
             requestBody: {
@@ -185,20 +211,6 @@ export async function writeUserDataToSheet(email: string, transactions: Transact
                 ]
             }
         });
-        
-        // This part clears any old rows that might be left if the new data is shorter than the old data
-        await sheets.spreadsheets.values.batchClear({
-             spreadsheetId: SHEET_ID,
-             requestBody: {
-                 ranges: [
-                    `${TRANSACTION_SHEET_NAME}!A${finalTransactions.length + 1}:F`,
-                    `${CATEGORY_SHEET_NAME}!A${finalCategories.length + 1}:F`,
-                    `${SETTINGS_SHEET_NAME}!A${finalSettings.length + 1}:B`,
-                    `${DEBT_SHEET_NAME}!A${finalDebts.length + 1}:G`,
-                 ]
-             }
-        });
-
     } catch (err) {
         console.error('The API returned an error during batch update/clear: ' + err);
         if (err instanceof Error) {

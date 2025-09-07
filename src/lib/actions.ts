@@ -1,3 +1,4 @@
+
 'use server';
 
 import { generateMonthlyReport } from "@/ai/flows/generate-ai-monthly-report";
@@ -56,7 +57,9 @@ export async function saveUserData(
     limit: number
 ) {
     try {
-        await writeUserDataToSheet(email, transactions, categories, limit);
+        // Since debts are managed separately, fetch them first to avoid overwriting them
+        const { debts } = await getUserDataFromSheet(email);
+        await writeUserDataToSheet(email, transactions, categories, limit, debts || []);
         return { success: true };
     } catch (error) {
         console.error("Error saving user data to sheet:", error);
@@ -78,11 +81,9 @@ export async function getDebts(email: string): Promise<{ success: boolean, data?
 
 export async function saveDebts(email: string, debts: Debt[]): Promise<{ success: boolean, error?: string }> {
   try {
-    // We can reuse writeUserDataToSheet by fetching existing data first
+    // To avoid overwriting other data, we must read it first, then write everything back.
     const { transactions, categories, spendingLimit } = await getUserDataFromSheet(email);
-    // Note: This is not the most efficient way as it reads then writes all data,
-    // but it reuses existing functions. A dedicated `writeDebtsToSheet` would be better for performance.
-    await writeUserDataToSheet(email, transactions, categories, spendingLimit, debts);
+    await writeUserDataToSheet(email, transactions || [], categories || [], spendingLimit || 0, debts);
     return { success: true };
   } catch (error) {
     console.error("Error saving debts to sheet:", error);
