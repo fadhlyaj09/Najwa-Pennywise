@@ -143,6 +143,15 @@ export default function Dashboard() {
       description: randomMessage,
     });
   };
+
+  const deleteTransaction = (id: string) => {
+    const updatedTransactions = transactions.filter(t => t.id !== id);
+    saveData(updatedTransactions, categories, spendingLimit);
+    toast({
+        title: "Transaction Deleted",
+        description: "The transaction has been successfully removed."
+    });
+  };
   
   const addCategory = (category: Omit<Category, "id" | 'isFixed' | 'icon'>) => {
     const existingCategory = categories.find(c => c.name.toLowerCase() === category.name.toLowerCase() && c.type === category.type);
@@ -339,7 +348,11 @@ export default function Dashboard() {
                 />
             </div>
           <div className="col-span-1 md:col-span-1 lg:col-span-2 flex flex-col gap-6">
-            <TransactionHistory transactions={transactions} categories={categories} />
+            <TransactionHistory 
+              transactions={transactions} 
+              categories={categories}
+              onDeleteTransaction={deleteTransaction}
+            />
           </div>
           <div className="col-span-1 md:col-span-1 lg:col-span-1 flex flex-col gap-6">
             <WeeklyChart transactions={transactions} />
@@ -350,3 +363,5 @@ export default function Dashboard() {
     </div>
   );
 }
+
+    

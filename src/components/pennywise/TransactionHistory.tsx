@@ -7,8 +7,20 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Transaction, Category } from "@/lib/types";
 import { format, parseISO } from "date-fns";
-import { type LucideIcon, ShoppingCart, Car, Landmark, Utensils, Coffee, UtensilsCrossed, Cookie, ShoppingBag, Users, Wifi, Tag, Repeat, BookUser } from 'lucide-react';
+import { type LucideIcon, ShoppingCart, Car, Landmark, Utensils, Coffee, UtensilsCrossed, Cookie, ShoppingBag, Users, Wifi, Tag, Repeat, BookUser, Trash2 } from 'lucide-react';
 import { formatRupiah } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 // A fallback map for icons
 const iconMap: { [key: string]: LucideIcon } = {
@@ -29,9 +41,10 @@ const getCategoryIcon = (categoryName: string, categories: Category[]) => {
 interface TransactionHistoryProps {
   transactions: Transaction[];
   categories: Category[];
+  onDeleteTransaction: (id: string) => void;
 }
 
-const TransactionHistory = ({ transactions, categories }: TransactionHistoryProps) => {
+const TransactionHistory = ({ transactions, categories, onDeleteTransaction }: TransactionHistoryProps) => {
 
   const groupedTransactions = React.useMemo(() => 
     transactions.reduce((acc, t) => {
@@ -66,14 +79,37 @@ const TransactionHistory = ({ transactions, categories }: TransactionHistoryProp
                   <AccordionContent>
                     <ul className="space-y-3">
                       {groupedTransactions[date].map((t) => (
-                        <li key={t.id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
+                        <li key={t.id} className="group flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
                           <div className="flex items-center">
                             {getCategoryIcon(t.category, categories)}
                             <span className="font-medium">{t.category}</span>
                           </div>
-                          <span className={`font-semibold ${t.type === 'income' ? 'text-green-500' : 'text-red-500'}`}>
-                            {t.type === 'income' ? '+' : '-'}{formatRupiah(t.amount)}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className={`font-semibold ${t.type === 'income' ? 'text-green-500' : 'text-red-500'}`}>
+                                {t.type === 'income' ? '+' : '-'}{formatRupiah(t.amount)}
+                            </span>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                 <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity">
+                                    <Trash2 className="h-4 w-4" />
+                                 </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete this transaction record.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => onDeleteTransaction(t.id)}>
+                                    Continue
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
                         </li>
                       ))}
                     </ul>
@@ -89,3 +125,5 @@ const TransactionHistory = ({ transactions, categories }: TransactionHistoryProp
 };
 
 export default TransactionHistory;
+
+    
