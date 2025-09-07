@@ -16,8 +16,7 @@ import { format, parseISO } from "date-fns";
 import DebtForm from "@/components/pennywise/DebtForm";
 import { useToast } from "@/hooks/use-toast";
 import { formatRupiah } from "@/lib/utils";
-import { getDebts, saveDebts, settleDebtAction } from "@/lib/actions";
-import { useDebouncedCallback } from "use-debounce";
+import { getDebts, settleDebtAction, addDebtAction } from "@/lib/actions";
 
 
 export default function DebtPage() {
@@ -26,24 +25,10 @@ export default function DebtPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   
   const [isLoading, setIsLoading] = useState(true);
-  const [isSyncing, setIsSyncing] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false); // Using this for any action that modifies data
   const [error, setError] = useState<string | null>(null);
 
   const { toast } = useToast();
-
-  const debouncedSave = useDebouncedCallback(async (email: string, debtsToSave: Debt[]) => {
-    setIsSyncing(true);
-    const result = await saveDebts(email, debtsToSave);
-    if (!result.success) {
-      toast({
-        variant: "destructive",
-        title: "Sync Error",
-        description: result.error || "Could not save debt records to the cloud."
-      });
-      setError(result.error || "Sync failed");
-    }
-    setIsSyncing(false);
-  }, 2000);
 
   useEffect(() => {
     if (isAuthLoading) {
@@ -61,7 +46,7 @@ export default function DebtPage() {
             const result = await getDebts(userEmail);
 
             if (result.success && result.data) {
-                setDebts(result.data);
+                setDebts(result.data.sort((a,b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime()));
             } else {
                 setError(result.error || 'Failed to load debt data.');
                 toast({
@@ -77,43 +62,48 @@ export default function DebtPage() {
   }, [userEmail, isAuthenticated, isAuthLoading, toast]);
 
 
-  const saveData = useCallback((newDebts: Debt[]) => {
-      if (!userEmail) return;
-      setDebts(newDebts);
-      debouncedSave(userEmail, newDebts);
-  }, [userEmail, debouncedSave]);
+  const addDebt = async (debtData: Omit<Debt, 'id' | 'status'>) => {
+    if (!userEmail) return;
 
+    setIsSyncing(true);
+    const result = await addDebtAction(userEmail, debtData);
+    setIsSyncing(false);
 
-  const addDebt = (debt: Omit<Debt, 'id' | 'status'>) => {
-    const newDebt: Debt = { ...debt, id: crypto.randomUUID(), status: 'unpaid' };
-    const updatedDebts = [newDebt, ...debts].sort((a,b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
-    saveData(updatedDebts);
-    setIsFormOpen(false);
-    toast({
-        title: "Success!",
-        description: "Debt record has been added."
-    });
+    if (result.success && result.debts) {
+        setDebts(result.debts.sort((a,b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime()));
+        setIsFormOpen(false);
+        toast({
+            title: "Success!",
+            description: "Debt record and expense transaction have been added."
+        });
+    } else {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: result.error || "Could not add the debt record."
+        });
+    }
   };
+
 
   const markAsPaid = async (debtId: string) => {
     if (!userEmail) return;
 
+    setIsSyncing(true);
     // Optimistic UI update
     const originalDebts = debts;
-    const updatedDebts = debts.map(d => d.id === debtId ? { ...d, status: 'paid' } : d);
+    const updatedDebts = debts.map(d => d.id === debtId ? { ...d, status: 'paid' as const } : d);
     setDebts(updatedDebts);
 
     const result = await settleDebtAction(userEmail, debtId);
+    setIsSyncing(false);
 
-    if (result.success) {
+    if (result.success && result.debts) {
+        setDebts(result.debts.sort((a,b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime()));
         toast({
             title: "Debt Settled!",
             description: "The debt has been marked as paid and an income transaction has been created."
         });
-        // Optionally re-sync or trust optimistic update. For now, we trust it.
-        if (result.debts) {
-          setDebts(result.debts);
-        }
     } else {
         // Rollback on failure
         setDebts(originalDebts);
@@ -164,7 +154,7 @@ export default function DebtPage() {
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               {isSyncing ? <Loader2 className="h-4 w-4 animate-spin" /> : (error ? <CloudOff className="h-4 w-4 text-destructive" /> : <Cloud className="h-4 w-4 text-green-500" />) }
-              <span className="hidden md:inline">{isSyncing ? "Syncing..." : (error ? "Sync Failed" : "Synced")}</span>
+              <span className="hidden md:inline">{isSyncing ? "Saving..." : (error ? "Sync Failed" : "Synced")}</span>
             </div>
 
             <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
@@ -177,7 +167,7 @@ export default function DebtPage() {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Add New Debt Record</DialogTitle>
-                        <DialogDescription>Keep track of who owes you money.</DialogDescription>
+                        <DialogDescription>Track money you've lent out. This will also create an expense transaction.</DialogDescription>
                     </DialogHeader>
                     <DebtForm onAddDebt={addDebt} />
                 </DialogContent>
@@ -217,7 +207,7 @@ export default function DebtPage() {
                        <ScrollArea className="h-[60vh]">
                             <div className="p-6 space-y-4">
                             {unpaidDebts.length === 0 ? (
-                                <p className="text-center text-muted-foreground py-10">No unpaid debts.</p>
+                                <p className="text-center text-muted-foreground py-10">No unpaid debts. Great!</p>
                             ) : (
                                 unpaidDebts.map(debt => (
                                     <div key={debt.id} className="p-4 border rounded-lg flex justify-between items-start">
@@ -227,7 +217,10 @@ export default function DebtPage() {
                                             <p className="text-sm text-muted-foreground">{debt.description}</p>
                                             <p className="text-xs text-muted-foreground mt-1">Due date: {format(parseISO(debt.dueDate), "d MMMM yyyy")}</p>
                                         </div>
-                                        <Button size="sm" onClick={() => markAsPaid(debt.id)}>Mark as Paid</Button>
+                                        <Button size="sm" onClick={() => markAsPaid(debt.id)} disabled={isSyncing}>
+                                            {isSyncing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                            Mark as Paid
+                                        </Button>
                                     </div>
                                 ))
                             )}

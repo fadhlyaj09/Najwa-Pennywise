@@ -80,20 +80,6 @@ export async function getDebts(email: string): Promise<{ success: boolean, data?
   }
 }
 
-export async function saveDebts(email: string, debts: Debt[]): Promise<{ success: boolean, error?: string }> {
-  try {
-    // To avoid overwriting other data, we must read it first, then write everything back.
-    const { transactions, categories, spendingLimit } = await getUserDataFromSheet(email);
-    await writeUserDataToSheet(email, transactions || [], categories || [], spendingLimit || 0, debts);
-    return { success: true };
-  } catch (error) {
-    console.error("Error saving debts to sheet:", error);
-    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-    return { success: false, error: `Sync Error: ${errorMessage}` };
-  }
-}
-
-
 export async function settleDebtAction(email: string, debtId: string): Promise<{ success: boolean, error?: string, debts?: Debt[] }> {
     try {
         const { transactions, categories, spendingLimit, debts } = await getUserDataFromSheet(email);
@@ -130,4 +116,40 @@ export async function settleDebtAction(email: string, debtId: string): Promise<{
     }
 }
 
-    
+export async function addDebtAction(
+    email: string, 
+    debtData: Omit<Debt, 'id' | 'status'>
+): Promise<{ success: boolean, error?: string, debts?: Debt[] }> {
+    try {
+        const { transactions, categories, spendingLimit, debts } = await getUserDataFromSheet(email);
+        
+        // 1. Create the new debt record
+        const newDebt: Debt = {
+            ...debtData,
+            id: crypto.randomUUID(),
+            status: 'unpaid',
+            icon: 'Users', // Default icon for a debt record
+        };
+        const updatedDebts = [...debts, newDebt];
+
+        // 2. Create a corresponding expense transaction
+        const newExpenseTransaction: Transaction = {
+            id: crypto.randomUUID(),
+            type: 'expense',
+            category: 'Lending', // New fixed category
+            amount: debtData.amount,
+            date: format(new Date(), "yyyy-MM-dd"), // Use today's date for the expense
+        };
+        const updatedTransactions = [...transactions, newExpenseTransaction];
+
+        // 3. Save everything back to the sheet
+        await writeUserDataToSheet(email, updatedTransactions, categories, spendingLimit, updatedDebts);
+
+        return { success: true, debts: updatedDebts };
+        
+    } catch (error) {
+        console.error("Error adding debt:", error);
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        return { success: false, error: `Add Debt Error: ${errorMessage}` };
+    }
+}

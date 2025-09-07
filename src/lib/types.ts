@@ -22,4 +22,5 @@ export interface Debt {
   description: string;
   dueDate: string;
   status: 'paid' | 'unpaid';
+  icon: string;
 }

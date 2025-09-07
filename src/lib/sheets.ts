@@ -16,7 +16,7 @@ const SETTINGS_SHEET_NAME = 'Settings';
 const USER_RANGE = `${USER_SHEET_NAME}!A:B`;
 const TRANSACTION_RANGE = `${TRANSACTION_SHEET_NAME}!A:F`; 
 const CATEGORY_RANGE = `${CATEGORY_SHEET_NAME}!A:F`;
-const DEBT_RANGE = `${DEBT_SHEET_NAME}!A:G`;
+const DEBT_RANGE = `${DEBT_SHEET_NAME}!A:H`; // Adjusted to include Icon
 const SETTINGS_RANGE = `${SETTINGS_SHEET_NAME}!A:B`;
 
 async function getSheetsService() {
@@ -48,6 +48,9 @@ async function getSheetData(range: string) {
         console.error(`The API returned an error for range ${range}: ` + err);
         if (err instanceof Error) {
             const message = (err as any).errors?.[0]?.message || err.message;
+            if (message.includes("Unable to parse range")) {
+                 throw new Error(`Sheet for range '${range}' not found. Please ensure it exists.`);
+            }
             throw new Error(`Failed to retrieve data from ${range}: ${message}`);
         }
         throw new Error(`Failed to retrieve data from ${range} due to an unknown error.`);
@@ -134,6 +137,7 @@ export async function getUserDataFromSheet(email: string) {
             description: row[4],
             dueDate: row[5],
             status: row[6],
+            icon: row[7],
         } as Debt));
 
     return {
@@ -168,37 +172,23 @@ export async function writeUserDataToSheet(
         getSheetData(DEBT_RANGE),
     ]);
 
-    // Filter out data for other users
     const otherUsersTransactions = allTransactions.slice(1).filter(row => row.length > 0 && row[0]?.toLowerCase() !== lowercasedEmail);
     const otherUsersCategories = allCategories.slice(1).filter(row => row.length > 0 && row[0]?.toLowerCase() !== lowercasedEmail);
     const otherUsersSettings = allSettings.slice(1).filter(row => row.length > 0 && row[0]?.toLowerCase() !== lowercasedEmail);
     const otherUsersDebts = allDebts.slice(1).filter(row => row.length > 0 && row[0]?.toLowerCase() !== lowercasedEmail);
-
+    
     // Prepare new data for the current user
     const newTransactionRows = transactions.map(t => [lowercasedEmail, t.id, t.type, t.category, t.amount, t.date]);
-    const newCategoryRows = categories.map(c => [lowercasedEmail, c.id, c.name, c.icon, c.type, c.isFixed]);
+    const newCategoryRows = categories.map(c => [lowercasedEmail, c.id, c.name, c.icon, c.type, c.isFixed ? 'TRUE' : 'FALSE']);
     const newSettingsRow = [lowercasedEmail, limit];
-    const newDebtRows = debts.map(d => [lowercasedEmail, d.id, d.debtorName, d.amount, d.description, d.dueDate, d.status]);
-
-    // Combine headers, other users' data, and new data for the current user
+    const newDebtRows = debts.map(d => [lowercasedEmail, d.id, d.debtorName, d.amount, d.description, d.dueDate, d.status, d.icon]);
+    
     const finalTransactions = [allTransactions[0], ...otherUsersTransactions, ...newTransactionRows];
     const finalCategories = [allCategories[0], ...otherUsersCategories, ...newCategoryRows];
     const finalSettings = [allSettings[0], ...otherUsersSettings, newSettingsRow];
     const finalDebts = [allDebts[0], ...otherUsersDebts, ...newDebtRows];
     
     try {
-        await sheets.spreadsheets.values.batchClear({
-            spreadsheetId: SHEET_ID,
-            requestBody: {
-                ranges: [
-                    TRANSACTION_RANGE,
-                    CATEGORY_RANGE,
-                    SETTINGS_RANGE,
-                    DEBT_RANGE,
-                ]
-            }
-       });
-
         await sheets.spreadsheets.values.batchUpdate({
             spreadsheetId: SHEET_ID,
             requestBody: {
@@ -212,7 +202,7 @@ export async function writeUserDataToSheet(
             }
         });
     } catch (err) {
-        console.error('The API returned an error during batch update/clear: ' + err);
+        console.error('The API returned an error during batch update: ' + err);
         if (err instanceof Error) {
             throw new Error(`Failed to write data to Google Sheet: ${err.message}`);
         }

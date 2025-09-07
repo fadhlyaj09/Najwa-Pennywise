@@ -7,7 +7,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Transaction, Category } from "@/lib/types";
 import { format, parseISO } from "date-fns";
-import { type LucideIcon, ShoppingCart, Car, Landmark, Utensils, Coffee, UtensilsCrossed, Cookie, ShoppingBag, Users, Wifi, Tag, Repeat } from 'lucide-react';
+import { type LucideIcon, ShoppingCart, Car, Landmark, Utensils, Coffee, UtensilsCrossed, Cookie, ShoppingBag, Users, Wifi, Tag, Repeat, BookUser } from 'lucide-react';
 import { formatRupiah } from '@/lib/utils';
 
 // A fallback map for icons
@@ -15,7 +15,7 @@ const iconMap: { [key: string]: LucideIcon } = {
     'shoppingcart': ShoppingCart, 'car': Car, 'landmark': Landmark, 'utensils': Utensils, 
     'coffee': Coffee, 'utensilscrossed': UtensilsCrossed, 'cookie': Cookie, 
     'shoppingbag': ShoppingBag, 'users': Users, 'wifi': Wifi, 'tag': Tag,
-    'repeat': Repeat,
+    'repeat': Repeat, 'bookuser': BookUser,
 };
 
 const getCategoryIcon = (categoryName: string, categories: Category[]) => {
@@ -89,5 +89,3 @@ const TransactionHistory = ({ transactions, categories }: TransactionHistoryProp
 };
 
 export default TransactionHistory;
-
-    
