@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo } from 'react';
@@ -98,3 +99,5 @@ const AiReport = ({ transactions, spendingLimit, income, expenses }: AiReportPro
 };
 
 export default AiReport;
+
+    

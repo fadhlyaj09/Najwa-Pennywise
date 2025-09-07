@@ -37,11 +37,12 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
   const handleLimitChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewLimit(e.target.value);
   };
-
+  
   const getAmountFontSize = (amount: number) => {
-    const amountLength = Math.abs(amount).toString().length;
-    if (amountLength > 9) return 'text-lg'; // e.g. 1,000,000,000
-    if (amountLength > 6) return 'text-xl'; // e.g. 1,000,000
+    const amountString = Math.abs(amount).toLocaleString('id-ID');
+    const len = amountString.length;
+    if (len > 13) return 'text-xl'; // Ratusan Juta / Miliar
+    if (len > 9) return 'text-2xl'; // Jutaan
     return 'text-2xl';
   }
 
@@ -54,7 +55,7 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
           <ArrowUpCircle className="h-4 w-4 text-green-500" />
         </CardHeader>
         <CardContent>
-          <div className={`${getAmountFontSize(income)} font-bold`}>{formatRupiah(income, {short: true})}</div>
+          <div className={`${getAmountFontSize(income)} font-bold break-keep`}>{formatRupiah(income, {short: true})}</div>
           <p className="text-xs text-muted-foreground">{formatRupiah(income)}</p>
         </CardContent>
       </Card>
@@ -64,7 +65,7 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
           <ArrowDownCircle className="h-4 w-4 text-red-500" />
         </CardHeader>
         <CardContent>
-          <div className={`${getAmountFontSize(expenses)} font-bold`}>{formatRupiah(expenses, {short: true})}</div>
+          <div className={`${getAmountFontSize(expenses)} font-bold break-keep`}>{formatRupiah(expenses, {short: true})}</div>
            <p className="text-xs text-muted-foreground">{formatRupiah(expenses)}</p>
         </CardContent>
       </Card>
@@ -74,7 +75,7 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
           <Wallet className="h-4 w-4 text-blue-500" />
         </CardHeader>
         <CardContent>
-          <div className={`${getAmountFontSize(balance)} font-bold ${balance < 0 ? 'text-destructive' : ''}`}>{formatRupiah(balance, {short: true})}</div>
+          <div className={`${getAmountFontSize(balance)} font-bold break-keep ${balance < 0 ? 'text-destructive' : ''}`}>{formatRupiah(balance, {short: true})}</div>
            <p className="text-xs text-muted-foreground">{formatRupiah(balance)}</p>
         </CardContent>
       </Card>
@@ -126,3 +127,5 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
 };
 
 export default SummaryCards;
+
+    

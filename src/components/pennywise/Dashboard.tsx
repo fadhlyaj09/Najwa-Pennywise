@@ -30,18 +30,11 @@ const fixedCategoriesData: Omit<Category, 'id'>[] = [
 ];
 
 const successMessages = [
-    "Transaction recorded, gorgeous! You're amazing at managing finances!",
-    "Noted! You're the most reliable, beautiful.",
-    "Excellent, gorgeous! One step closer to your financial goals.",
-    "Well done, beautiful! Controlled expenses, bright future.",
-    "Logged, gorgeous! Every penny counts, and you get it.",
-    "Awesome, beautiful! Keep up the discipline.",
-    "Your record is as beautiful as you are!",
-    "Perfect! You're a pro at this, gorgeous!",
-    "Wow, beautiful! Your finances are getting more organized.",
-    "A smart girl like you is a master at managing money!",
-    "You're amazing, beautiful! Keep up the great saving habit.",
-    "Beautiful and financially smart, the complete package!",
+    "Transaction recorded successfully!",
+    "Noted! One step closer to your financial goals.",
+    "Excellent! Keep up the great work.",
+    "Logged! Every penny counts.",
+    "Awesome! Your finances are getting more organized.",
 ];
 
 export default function Dashboard() {
@@ -64,10 +57,12 @@ export default function Dashboard() {
       const storedCategoriesJson = localStorage.getItem(categoriesKey!);
       const storedLimitJson = localStorage.getItem(limitKey!);
 
+      let loadedTransactions: Transaction[] = [];
       if (storedTransactionsJson) {
-        try { setTransactions(JSON.parse(storedTransactionsJson)); } 
+        try { loadedTransactions = JSON.parse(storedTransactionsJson); } 
         catch (e) { console.error("Failed to parse transactions:", e); }
       }
+      setTransactions(loadedTransactions);
 
       let userCategories: Category[] = [];
       if (storedCategoriesJson) {
@@ -140,7 +135,7 @@ export default function Dashboard() {
     if (categoryToDelete.isFixed) {
         toast({
             variant: "destructive",
-            title: "Cannot delete category",
+            title: "Cannot Delete Category",
             description: `"${categoryToDelete.name}" is a default category and cannot be deleted.`
         });
         return;
@@ -151,7 +146,7 @@ export default function Dashboard() {
     if (isCategoryInUse) {
         toast({
             variant: "destructive",
-            title: "Cannot delete category",
+            title: "Cannot Delete Category",
             description: `"${categoryToDelete.name}" is in use by one or more transactions.`
         });
         return;
@@ -197,7 +192,7 @@ export default function Dashboard() {
         <div className="w-full max-w-5xl mx-auto flex h-16 items-center justify-between px-4">
           <NextLink href="/" passHref>
             <h1 className="text-xl md:text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent text-transparent bg-clip-text cursor-pointer">
-              Najwa Pennywise
+              Pennywise
             </h1>
           </NextLink>
           <div className="flex items-center gap-2">
@@ -302,3 +297,5 @@ export default function Dashboard() {
     </div>
   );
 }
+
+    

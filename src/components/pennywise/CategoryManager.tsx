@@ -158,3 +158,5 @@ const CategoryManager = ({ categories, onAddCategory, onDeleteCategory }: Catego
 };
 
 export default CategoryManager;
+
+    

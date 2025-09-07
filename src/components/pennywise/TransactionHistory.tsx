@@ -88,3 +88,5 @@ const TransactionHistory = ({ transactions, categories }: TransactionHistoryProp
 };
 
 export default TransactionHistory;
+
+    

@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import NextLink from 'next/link';
-import { PlusCircle, BookUser, LogOut, ArrowLeft, Loader2 } from 'lucide-react';
+import { PlusCircle, LogOut, ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/use-auth";
@@ -19,7 +19,7 @@ import { formatRupiah } from "@/lib/utils";
 
 
 export default function DebtPage() {
-  const { logout, isAuthenticated, isLoading, userEmail } = useAuth();
+  const { logout, isAuthenticated, isLoading: isAuthLoading, userEmail } = useAuth();
   const [debts, setDebts] = useState<Debt[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -73,7 +73,7 @@ export default function DebtPage() {
     return { unpaidDebts: unpaid, paidDebts: paid, totalUnpaid: total };
   }, [debts]);
   
-  if (isLoading || !isAuthenticated) {
+  if (isAuthLoading || !isAuthenticated) {
      return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-10 w-10 animate-spin" />
@@ -187,3 +187,5 @@ export default function DebtPage() {
     </div>
   );
 }
+
+    

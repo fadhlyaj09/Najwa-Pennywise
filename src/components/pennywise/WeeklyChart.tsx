@@ -67,7 +67,7 @@ const WeeklyChart = ({ transactions }: WeeklyChartProps) => {
                 />
                 <ChartTooltip
                   cursor={false}
-                  content={<ChartTooltipContent indicator="dot" />}
+                  content={<ChartTooltipContent indicator="dot" formatter={(value, name) => `${name}: ${formatRupiah(value as number)}`} />}
                 />
                 <ChartLegend content={<ChartLegendContent />} />
                 <Bar dataKey="income" fill="var(--color-income)" radius={4} />
@@ -87,3 +87,5 @@ const WeeklyChart = ({ transactions }: WeeklyChartProps) => {
 }
 
 export default WeeklyChart
+
+    

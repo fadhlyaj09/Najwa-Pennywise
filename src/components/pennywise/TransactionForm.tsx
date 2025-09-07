@@ -28,7 +28,7 @@ const formSchema = z.object({
   type: z.enum(["income", "expense"], { required_error: "Please select a transaction type." }),
   amount: z.coerce.number().positive({ message: "Amount must be positive." }),
   date: z.string().refine((val) => !isNaN(Date.parse(val)), { message: "Invalid date" }),
-  category: z.string().min(1, { message: "Please select a category." }),
+  category: z.string().min(1, { message: "Please select or create a category." }),
 });
 
 interface TransactionFormProps {
@@ -65,6 +65,8 @@ export default function TransactionForm({ incomeCategories, expenseCategories, o
   
   const categories = transactionType === 'income' ? incomeCategories : expenseCategories;
   const [open, setOpen] = React.useState(false);
+  const [inputValue, setInputValue] = React.useState("");
+
 
   return (
     <Form {...form}>
@@ -139,9 +141,9 @@ export default function TransactionForm({ incomeCategories, expenseCategories, o
                     >
                       {field.value
                         ? categories.find(
-                            (cat) => cat.name === field.value
+                            (cat) => cat.name.toLowerCase() === field.value.toLowerCase()
                           )?.name
-                        : "Select category"}
+                        : "Select or create category"}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </FormControl>
@@ -149,11 +151,22 @@ export default function TransactionForm({ incomeCategories, expenseCategories, o
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                   <Command>
                     <CommandInput 
-                      placeholder="Search category..." 
+                      placeholder="Search or create category..."
+                      onValueChange={setInputValue}
                     />
                     <CommandList>
                       <ScrollArea className="h-48">
-                        <CommandEmpty>No category found.</CommandEmpty>
+                        <CommandEmpty>
+                           {inputValue && <CommandItem
+                              value={inputValue}
+                              onSelect={() => {
+                                form.setValue("category", inputValue)
+                                setOpen(false)
+                              }}
+                            >
+                              Create "{inputValue}"
+                            </CommandItem>}
+                        </CommandEmpty>
                         <CommandGroup>
                           {categories.map((cat) => (
                             <CommandItem
