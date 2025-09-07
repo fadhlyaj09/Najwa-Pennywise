@@ -52,7 +52,7 @@ Structure your HTML report as follows:
 3.  **Saran & Rekomendasi**: Offer encouraging advice and concrete suggestions for the next month.
     -   Suggest realistic budget adjustments.
     -   Give tips to increase savings or reduce specific expenses.
-4.  **Closing**: End with a motivational and positive closing statement.
+4.  **Closing**: End with a motivational and positive closing statement, signed off with "Salam hangat,<br>Fadhly Aziez Jalaluddin".
 
 Formatting Rules:
 - Use HTML tags like <h1>, <h2>, <h3> for titles, <p> for paragraphs, <ul> and <li> for lists, and <strong> or <b> for emphasis.
