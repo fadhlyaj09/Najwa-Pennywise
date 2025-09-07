@@ -35,6 +35,7 @@ const najwaCompliments = [
     "Tercatat! Najwa, caramu mengatur keuangan sangat menginspirasi.",
     "Bagus sekali, Najwa! Teruslah menjadi manajer keuangan yang andal.",
     "Hebat, Najwa! Selangkah lebih dekat menuju kebebasan finansial.",
+    "Najwa cantik",
 ];
 
 export default function Dashboard() {
@@ -192,7 +193,7 @@ export default function Dashboard() {
         <div className="w-full max-w-5xl mx-auto flex h-16 items-center justify-between px-4">
           <NextLink href="/" passHref>
             <h1 className="text-xl md:text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent text-transparent bg-clip-text cursor-pointer">
-              Pennywise
+              Najwa Pennywise
             </h1>
           </NextLink>
           <div className="flex items-center gap-2">
@@ -297,5 +298,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
-    
