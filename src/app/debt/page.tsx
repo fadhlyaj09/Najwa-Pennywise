@@ -1,13 +1,13 @@
 
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import NextLink from 'next/link';
 import { PlusCircle, LogOut, ArrowLeft, Loader2, Cloud, CloudOff } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/use-auth";
-import type { Debt } from "@/lib/types";
+import type { Debt, Transaction } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -18,24 +18,20 @@ import { useToast } from "@/hooks/use-toast";
 import { formatRupiah } from "@/lib/utils";
 import { getDebts, settleDebtAction, addDebtAction } from "@/lib/actions";
 
-
 export default function DebtPage() {
   const { logout, isAuthenticated, isAuthLoading, userEmail } = useAuth();
   const [debts, setDebts] = useState<Debt[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   
   const [isLoading, setIsLoading] = useState(true);
-  const [isSyncing, setIsSyncing] = useState(false); // Using this for any action that modifies data
+  const [isSyncing, setIsSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const { toast } = useToast();
 
   useEffect(() => {
-    if (isAuthLoading) {
-      return;
-    }
+    if (isAuthLoading) return;
     if (!isAuthenticated) {
-      // Redirect handled by useAuth or page wrapper
       setIsLoading(false);
       return;
     }
@@ -62,15 +58,19 @@ export default function DebtPage() {
   }, [userEmail, isAuthenticated, isAuthLoading, toast]);
 
 
+<<<<<<< HEAD
   const addDebt = async (debtData: Omit<Debt, 'id' | 'status' | 'lendingTransactionId' | 'repaymentTransactionId'>) => {
+=======
+  const addDebt = async (debtData: Omit<Debt, 'id' | 'status' | 'icon'>) => {
+>>>>>>> 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
     if (!userEmail) return;
 
     setIsSyncing(true);
     const result = await addDebtAction(userEmail, debtData);
     setIsSyncing(false);
 
-    if (result.success && result.debts) {
-        setDebts(result.debts.sort((a,b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime()));
+    if (result.success && result.newDebt) {
+        setDebts(prev => [result.newDebt!, ...prev].sort((a,b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime()));
         setIsFormOpen(false);
         toast({
             title: "Success!",
@@ -85,28 +85,20 @@ export default function DebtPage() {
     }
   };
 
-
-  const markAsPaid = async (debtId: string) => {
-    if (!userEmail) return;
+  const markAsPaid = async (debt: Debt) => {
+    if (!userEmail || debt.status === 'paid') return;
 
     setIsSyncing(true);
-    // Optimistic UI update
-    const originalDebts = debts;
-    const updatedDebts = debts.map(d => d.id === debtId ? { ...d, status: 'paid' as const } : d);
-    setDebts(updatedDebts);
-
-    const result = await settleDebtAction(userEmail, debtId);
+    const result = await settleDebtAction(userEmail, debt);
     setIsSyncing(false);
 
-    if (result.success && result.debts) {
-        setDebts(result.debts.sort((a,b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime()));
+    if (result.success && result.updatedDebt) {
+        setDebts(prev => prev.map(d => d.id === result.updatedDebt!.id ? result.updatedDebt! : d));
         toast({
             title: "Debt Settled!",
             description: "The debt has been marked as paid and an income transaction has been created."
         });
     } else {
-        // Rollback on failure
-        setDebts(originalDebts);
         toast({
             variant: "destructive",
             title: "Error",
@@ -217,7 +209,7 @@ export default function DebtPage() {
                                             <p className="text-sm text-muted-foreground">{debt.description}</p>
                                             <p className="text-xs text-muted-foreground mt-1">Due date: {format(parseISO(debt.dueDate), "d MMMM yyyy")}</p>
                                         </div>
-                                        <Button size="sm" onClick={() => markAsPaid(debt.id)} disabled={isSyncing}>
+                                        <Button size="sm" onClick={() => markAsPaid(debt)} disabled={isSyncing}>
                                             {isSyncing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                             Mark as Paid
                                         </Button>

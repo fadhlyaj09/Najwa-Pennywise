@@ -4,7 +4,11 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import NextLink from 'next/link';
 import { useRouter } from "next/navigation";
+<<<<<<< HEAD
 import { PlusCircle, Tags, LogOut, BookUser, MoreVertical, Loader2, Cloud, CloudOff, Repeat } from "lucide-react";
+=======
+import { PlusCircle, Tags, LogOut, BookUser, MoreVertical, Loader2, Cloud, CloudOff } from "lucide-react";
+>>>>>>> 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
 import type { Transaction, Category, Debt } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import SummaryCards from "@/components/pennywise/SummaryCards";
@@ -18,9 +22,20 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { useAuth } from "@/hooks/use-auth";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+<<<<<<< HEAD
 import { getUserData, saveUserData, deleteTransactionAction } from "@/lib/actions";
 import { useDebouncedCallback } from "use-debounce";
 
+=======
+import {
+    getUserData,
+    addTransactionAction,
+    deleteTransactionAction,
+    addCategoryAction,
+    deleteCategoryAction,
+    setSpendingLimitAction,
+} from "@/lib/actions";
+>>>>>>> 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
 
 const fixedCategoriesData: Omit<Category, 'id'>[] = [
     { name: 'Salary', icon: 'Landmark', type: 'income', isFixed: true },
@@ -50,13 +65,15 @@ export default function Dashboard() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [debts, setDebts] = useState<Debt[]>([]);
   const [spendingLimit, setSpendingLimit] = useState<number>(5000000);
-  
+  const [debts, setDebts] = useState<Debt[]>([]);
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const { toast } = useToast();
 
+<<<<<<< HEAD
   const debouncedSave = useDebouncedCallback(async (email: string, trans: Transaction[], cats: Category[], limit: number, debtList: Debt[]) => {
     setIsSyncing(true);
     const result = await saveUserData(email, trans, cats, limit, debtList);
@@ -72,6 +89,8 @@ export default function Dashboard() {
   }, 2000);
 
 
+=======
+>>>>>>> 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
   useEffect(() => {
     if (!userEmail) {
         setIsLoading(false);
@@ -90,6 +109,7 @@ export default function Dashboard() {
             setDebts(result.data.debts || []);
             
             const userCategories = result.data.categories || [];
+<<<<<<< HEAD
             
             const existingCategoryNames = new Set(userCategories.map(c => `${c.name.toLowerCase()}|${c.type}`));
             const missingFixedCategories = fixedCategoriesData.filter(
@@ -98,6 +118,19 @@ export default function Dashboard() {
       
             const finalCategories = [...userCategories, ...missingFixedCategories.map(c => ({...c, id: crypto.randomUUID()}))];
             setCategories(finalCategories);
+=======
+            const newCategories = [...userCategories];
+            
+            fixedCategoriesData.forEach(fixedCat => {
+                if (!userCategories.some(userCat => userCat.name === fixedCat.name && userCat.type === fixedCat.type)) {
+                    const newCategoryToAdd: Category = { ...fixedCat, id: crypto.randomUUID() };
+                    newCategories.push(newCategoryToAdd);
+                    // Also add it to the sheet for consistency
+                    addCategoryAction(userEmail, newCategoryToAdd);
+                }
+            });
+            setCategories(newCategories);
+>>>>>>> 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
 
         } else {
             setError(result.error || 'Failed to load data.');
@@ -112,7 +145,10 @@ export default function Dashboard() {
     loadData();
   }, [userEmail, toast]);
 
+  const addTransaction = async (transactionData: Omit<Transaction, "id">) => {
+    if (!userEmail) return;
 
+<<<<<<< HEAD
  const saveData = useCallback((
     newTransactions: Transaction[] | ((prev: Transaction[]) => Transaction[]),
     newCategories: Category[] | ((prev: Category[]) => Category[]),
@@ -151,11 +187,17 @@ export default function Dashboard() {
     const categoryExists = categories.some(c => c.name.toLowerCase() === transaction.category.toLowerCase() && c.type === transaction.type);
     
     let updatedCategories = categories;
+=======
+    const categoryExists = categories.some(c => c.name.toLowerCase() === transactionData.category.toLowerCase() && c.type === transactionData.type);
+>>>>>>> 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
     if (!categoryExists) {
-        const newCategory: Category = { name: transaction.category, type: transaction.type, id: crypto.randomUUID(), icon: 'Tag', isFixed: false };
-        updatedCategories = [...categories, newCategory];
+        const catResult = await addCategoryAction(userEmail, { name: transactionData.category, type: transactionData.type });
+        if (catResult.success && catResult.category) {
+            setCategories(prev => [...prev, catResult.category!]);
+        }
     }
 
+<<<<<<< HEAD
     const newTransaction = { ...transaction, id: crypto.randomUUID() };
     const updatedTransactions = [newTransaction, ...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     
@@ -190,46 +232,80 @@ export default function Dashboard() {
               description: result.error || "Could not delete the transaction."
           });
       }
-  };
-  
-  const addCategory = (category: Omit<Category, "id" | 'isFixed' | 'icon'>) => {
-    const existingCategory = categories.find(c => c.name.toLowerCase() === category.name.toLowerCase() && c.type === category.type);
-    if (existingCategory) {
+=======
+    const result = await addTransactionAction(userEmail, transactionData);
+    if (result.success && result.transaction) {
+        setTransactions(prev => [result.transaction!, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+        setTransactionFormOpen(false);
+        const randomMessage = najwaCompliments[Math.floor(Math.random() * najwaCompliments.length)];
         toast({
-            variant: 'destructive',
-            title: 'Category exists',
-            description: `Category "${category.name}" for ${category.type} already exists.`
+          title: "Success!",
+          description: randomMessage,
         });
+    } else {
+        toast({ variant: 'destructive', title: 'Error', description: result.error });
+    }
+  };
+
+  const deleteTransaction = async (id: string) => {
+    const transactionToDelete = transactions.find(t => t.id === id);
+    if (!transactionToDelete) return;
+
+    const result = await deleteTransactionAction(transactionToDelete, debts);
+    
+    if (result.success) {
+        setTransactions(prev => prev.filter(t => t.id !== id));
+        if (result.deletedDebtId) {
+            setDebts(prev => prev.filter(d => d.id !== result.deletedDebtId));
+        }
+        if (result.updatedDebt) {
+            setDebts(prev => prev.map(d => d.id === result.updatedDebt!.id ? result.updatedDebt! : d));
+        }
+        toast({ title: "Transaction Deleted", description: "The transaction has been successfully removed." });
+    } else {
+        toast({ variant: 'destructive', title: 'Error', description: result.error });
+    }
+>>>>>>> 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
+  };
+
+  const addCategory = async (categoryData: Omit<Category, "id" | 'isFixed' | 'icon'>) => {
+    if (!userEmail) return;
+
+    const existingCategory = categories.find(c => c.name.toLowerCase() === categoryData.name.toLowerCase() && c.type === categoryData.type);
+    if (existingCategory) {
+        toast({ variant: 'destructive', title: 'Category exists', description: `Category "${categoryData.name}" for ${categoryData.type} already exists.` });
         return; 
     }
+<<<<<<< HEAD
     const newCategory: Category = { ...category, id: crypto.randomUUID(), icon: 'Tag', isFixed: false };
     const updatedCategories = [...categories, newCategory];
     saveData(transactions, updatedCategories, spendingLimit, debts);
+=======
+    const result = await addCategoryAction(userEmail, categoryData);
+    if (result.success && result.category) {
+        setCategories(prev => [...prev, result.category!]);
+        toast({ title: 'Success!', description: `Category "${result.category.name}" has been added.` });
+    } else {
+        toast({ variant: 'destructive', title: 'Error', description: result.error });
+    }
+>>>>>>> 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
   };
-  
-  const deleteCategory = (id: string) => {
+
+  const deleteCategory = async (id: string) => {
     const categoryToDelete = categories.find(c => c.id === id);
     if (!categoryToDelete) return;
 
     if (categoryToDelete.isFixed) {
-        toast({
-            variant: "destructive",
-            title: "Cannot Delete Category",
-            description: `"${categoryToDelete.name}" is a default category and cannot be deleted.`
-        });
+        toast({ variant: "destructive", title: "Cannot Delete Category", description: `"${categoryToDelete.name}" is a default category and cannot be deleted.` });
         return;
     }
 
     const isCategoryInUse = transactions.some(t => t.category.toLowerCase() === categoryToDelete.name.toLowerCase() && t.type === categoryToDelete.type);
-    
     if (isCategoryInUse) {
-        toast({
-            variant: "destructive",
-            title: "Cannot Delete Category",
-            description: `"${categoryToDelete.name}" is in use by one or more transactions.`
-        });
+        toast({ variant: "destructive", title: "Cannot Delete Category", description: `"${categoryToDelete.name}" is in use by one or more transactions.` });
         return;
     }
+<<<<<<< HEAD
     const updatedCategories = categories.filter(c => c.id !== id);
     saveData(transactions, updatedCategories, spendingLimit, debts);
     toast({
@@ -240,15 +316,31 @@ export default function Dashboard() {
 
   const handleSetSpendingLimit = (newLimit: number) => {
     saveData(transactions, categories, newLimit, debts);
+=======
+    
+    const result = await deleteCategoryAction(id);
+    if (result.success) {
+        setCategories(prev => prev.filter(c => c.id !== id));
+        toast({ title: 'Success!', description: `Category "${categoryToDelete.name}" has been deleted.` });
+    } else {
+        toast({ variant: 'destructive', title: 'Error', description: result.error });
+    }
   };
-  
+
+  const handleSetSpendingLimit = async (newLimit: number) => {
+    if (!userEmail) return;
+    const result = await setSpendingLimitAction(userEmail, newLimit);
+    if (result.success) {
+        setSpendingLimit(newLimit);
+    } else {
+        toast({ variant: 'destructive', title: 'Error', description: result.error });
+    }
+>>>>>>> 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
+  };
+
   const { income, expenses, balance } = useMemo(() => {
-    const income = transactions
-      .filter(t => t.type === 'income')
-      .reduce((acc, t) => acc + t.amount, 0);
-    const expenses = transactions
-      .filter(t => t.type === 'expense')
-      .reduce((acc, t) => acc + t.amount, 0);
+    const income = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+    const expenses = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
     const balance = income - expenses;
     return { income, expenses, balance };
   }, [transactions]);
@@ -257,15 +349,11 @@ export default function Dashboard() {
   const [categoryManagerOpen, setCategoryManagerOpen] = useState(false);
 
   const incomeCategories = useMemo(() => {
-      return categories
-          .filter(c => c.type === 'income')
-          .sort((a,b) => a.name.localeCompare(b.name));
+      return categories.filter(c => c.type === 'income').sort((a,b) => a.name.localeCompare(b.name));
   }, [categories]);
 
   const expenseCategories = useMemo(() => {
-    return categories
-      .filter(c => c.type === 'expense')
-      .sort((a,b) => a.name.localeCompare(b.name));
+    return categories.filter(c => c.type === 'expense').sort((a,b) => a.name.localeCompare(b.name));
   }, [categories]);
 
   if (isLoading) {
@@ -275,7 +363,6 @@ export default function Dashboard() {
       </div>
     );
   }
-
 
   return (
     <div className="flex flex-col min-h-screen bg-background overflow-x-hidden">
@@ -287,7 +374,6 @@ export default function Dashboard() {
             </h1>
           </NextLink>
           <div className="flex items-center gap-2">
-            
             <div className="flex items-center gap-2 text-xs text-muted-foreground mr-2">
               {isSyncing || isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : (error ? <CloudOff className="h-4 w-4 text-destructive" /> : <Cloud className="h-4 w-4 text-green-500" />) }
               <span className="hidden md:inline">{isSyncing || isLoading ? "Syncing..." : (error ? "Sync Failed" : "Synced")}</span>
@@ -402,6 +488,9 @@ export default function Dashboard() {
     </div>
   );
 }
+<<<<<<< HEAD
 
 
     
+=======
+>>>>>>> 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)

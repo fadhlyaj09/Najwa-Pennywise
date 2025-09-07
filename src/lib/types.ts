@@ -23,4 +23,6 @@ export interface Debt {
   dueDate: string;
   status: 'paid' | 'unpaid';
   icon: string;
+  lendingTransactionId?: string; // The ID of the expense transaction created when lending money
+  repaymentTransactionId?: string; // The ID of the income transaction created when debt is paid
 }

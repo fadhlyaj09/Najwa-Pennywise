@@ -26,7 +26,11 @@ const formSchema = z.object({
 });
 
 interface DebtFormProps {
+<<<<<<< HEAD
   onAddDebt: (debt: Omit<Debt, 'id' | 'status' | 'lendingTransactionId' | 'repaymentTransactionId'>) => void;
+=======
+  onAddDebt: (debt: Omit<Debt, 'id' | 'status' | 'icon'>) => void;
+>>>>>>> 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
 }
 
 export default function DebtForm({ onAddDebt }: DebtFormProps) {
@@ -41,7 +45,8 @@ export default function DebtForm({ onAddDebt }: DebtFormProps) {
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    onAddDebt(values);
+    const debtData = { ...values, icon: 'Users' };
+    onAddDebt(debtData);
     form.reset();
   }
 

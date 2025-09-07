@@ -14,9 +14,9 @@ const DEBT_SHEET_NAME = 'Debts';
 const SETTINGS_SHEET_NAME = 'Settings';
 
 const USER_RANGE = `${USER_SHEET_NAME}!A:B`;
-const TRANSACTION_RANGE = `${TRANSACTION_SHEET_NAME}!A:F`; 
+const TRANSACTION_RANGE = `${TRANSACTION_SHEET_NAME}!A:H`; 
 const CATEGORY_RANGE = `${CATEGORY_SHEET_NAME}!A:F`;
-const DEBT_RANGE = `${DEBT_SHEET_NAME}!A:H`; // Adjusted to include Icon
+const DEBT_RANGE = `${DEBT_SHEET_NAME}!A:J`;
 const SETTINGS_RANGE = `${SETTINGS_SHEET_NAME}!A:B`;
 
 async function getSheetsService() {
@@ -57,9 +57,81 @@ async function getSheetData(range: string) {
     }
 }
 
+async function appendRow(range: string, row: (string | number | boolean | undefined)[]) {
+    const sheets = await getSheetsService();
+    await sheets.spreadsheets.values.append({
+        spreadsheetId: SHEET_ID,
+        range: range,
+        valueInputOption: 'USER_ENTERED',
+        requestBody: { values: [row] },
+    });
+}
+
+async function findRowIndex(sheetName: string, columnIndex: number, value: string): Promise<number> {
+    const sheetData = await getSheetData(`${sheetName}!A:J`); // Assume max 10 columns for search
+    const rowIndex = sheetData.findIndex(row => row[columnIndex] === value);
+    return rowIndex !== -1 ? rowIndex + 1 : -1; // Sheets are 1-indexed
+}
+
+async function deleteRow(sheetName: string, rowIndex: number) {
+    const sheets = await getSheetsService();
+    const sheetId = await getSheetIdByName(sheetName);
+
+    if (sheetId === null || rowIndex <= 0) {
+        throw new Error(`Could not find sheet ${sheetName} or invalid row index.`);
+    }
+
+    await sheets.spreadsheets.batchUpdate({
+        spreadsheetId: SHEET_ID,
+        requestBody: {
+            requests: [{
+                deleteDimension: {
+                    range: {
+                        sheetId: sheetId,
+                        dimension: 'ROWS',
+                        startIndex: rowIndex - 1,
+                        endIndex: rowIndex,
+                    },
+                },
+            }],
+        },
+    });
+}
+
+async function updateRow(sheetName: string, rowIndex: number, newRowData: (string | number | boolean | undefined)[]) {
+    const sheets = await getSheetsService();
+    const range = `${sheetName}!A${rowIndex}`;
+    await sheets.spreadsheets.values.update({
+        spreadsheetId: SHEET_ID,
+        range,
+        valueInputOption: 'USER_ENTERED',
+        requestBody: { values: [newRowData] },
+    });
+}
+
+
+let sheetIdMap: Record<string, number> | null = null;
+async function getSheetIdByName(sheetName: string): Promise<number | null> {
+    if (sheetIdMap) {
+        return sheetIdMap[sheetName] || null;
+    }
+
+    const sheets = await getSheetsService();
+    const response = await sheets.spreadsheets.get({ spreadsheetId: SHEET_ID });
+    const sheetList = response.data.sheets;
+    if (!sheetList) return null;
+
+    sheetIdMap = {};
+    for (const sheet of sheetList) {
+        if (sheet.properties?.title && sheet.properties?.sheetId != null) {
+            sheetIdMap[sheet.properties.title] = sheet.properties.sheetId;
+        }
+    }
+    return sheetIdMap[sheetName] || null;
+}
+
 export async function findUserByEmailInSheet(email: string): Promise<User | null> {
     const rows = await getSheetData(USER_RANGE);
-    // Skip header row by starting search from index 1
     for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
         if (row[0] && row[0].toLowerCase() === email.toLowerCase()) {
@@ -70,25 +142,8 @@ export async function findUserByEmailInSheet(email: string): Promise<User | null
 }
 
 export async function appendUserToSheet(user: User): Promise<void> {
-    const sheets = await getSheetsService();
-    try {
-        await sheets.spreadsheets.values.append({
-            spreadsheetId: SHEET_ID,
-            range: USER_RANGE,
-            valueInputOption: 'USER_ENTERED',
-            requestBody: {
-                values: [[user.email, user.password]],
-            },
-        });
-    } catch (err) {
-        console.error('The API returned an error: ' + err);
-        if (err instanceof Error) {
-            throw new Error(`Failed to append data to Google Sheet: ${err.message}`);
-        }
-        throw new Error('Failed to append data to Google Sheet due to an unknown error.');
-    }
+    await appendRow(USER_RANGE, [user.email, user.password]);
 }
-
 
 export async function getUserDataFromSheet(email: string) {
     const [
@@ -138,6 +193,8 @@ export async function getUserDataFromSheet(email: string) {
             dueDate: row[5],
             status: row[6],
             icon: row[7],
+            lendingTransactionId: row[8],
+            repaymentTransactionId: row[9],
         } as Debt));
 
     return {
@@ -148,64 +205,54 @@ export async function getUserDataFromSheet(email: string) {
     };
 }
 
+export async function addTransactionToSheet(email: string, transaction: Transaction) {
+    await appendRow(TRANSACTION_RANGE, [email, transaction.id, transaction.type, transaction.category, transaction.amount, transaction.date]);
+}
 
-export async function writeUserDataToSheet(
-    email: string, 
-    transactions: Transaction[], 
-    categories: Category[], 
-    limit: number, 
-    debts: Debt[]
-) {
-    const sheets = await getSheetsService();
+export async function addCategoryToSheet(email: string, category: Category) {
+    await appendRow(CATEGORY_RANGE, [email, category.id, category.name, category.icon, category.type, category.isFixed]);
+}
+
+export async function addDebtToSheet(email: string, debt: Debt) {
+    await appendRow(DEBT_RANGE, [email, debt.id, debt.debtorName, debt.amount, debt.description, debt.dueDate, debt.status, debt.icon, debt.lendingTransactionId, debt.repaymentTransactionId]);
+}
+
+export async function deleteTransactionFromSheet(transactionId: string) {
+    const rowIndex = await findRowIndex(TRANSACTION_SHEET_NAME, 1, transactionId);
+    if (rowIndex > 0) {
+        await deleteRow(TRANSACTION_SHEET_NAME, rowIndex);
+    }
+}
+
+export async function deleteDebtFromSheet(debtId: string) {
+    const rowIndex = await findRowIndex(DEBT_SHEET_NAME, 1, debtId);
+    if (rowIndex > 0) {
+        await deleteRow(DEBT_SHEET_NAME, rowIndex);
+    }
+}
+
+export async function deleteCategoryFromSheet(categoryId: string) {
+    const rowIndex = await findRowIndex(CATEGORY_SHEET_NAME, 1, categoryId);
+    if (rowIndex > 0) {
+        await deleteRow(CATEGORY_SHEET_NAME, rowIndex);
+    }
+}
+
+export async function updateDebtInSheet(email: string, debt: Debt) {
+    const rowIndex = await findRowIndex(DEBT_SHEET_NAME, 1, debt.id);
+    if (rowIndex > 0) {
+        await updateRow(DEBT_SHEET_NAME, rowIndex, [email, debt.id, debt.debtorName, debt.amount, debt.description, debt.dueDate, debt.status, debt.icon, debt.lendingTransactionId, debt.repaymentTransactionId]);
+    }
+}
+
+export async function updateSpendingLimitInSheet(email: string, limit: number) {
     const lowercasedEmail = email.toLowerCase();
+    const allSettings = await getSheetData(SETTINGS_RANGE);
+    const rowIndex = allSettings.findIndex(row => row[0]?.toLowerCase() === lowercasedEmail);
 
-    // Fetch all existing data first
-    const [
-        allTransactions, 
-        allCategories, 
-        allSettings, 
-        allDebts
-    ] = await Promise.all([
-        getSheetData(TRANSACTION_RANGE),
-        getSheetData(CATEGORY_RANGE),
-        getSheetData(SETTINGS_RANGE),
-        getSheetData(DEBT_RANGE),
-    ]);
-
-    const otherUsersTransactions = allTransactions.slice(1).filter(row => row.length > 0 && row[0]?.toLowerCase() !== lowercasedEmail);
-    const otherUsersCategories = allCategories.slice(1).filter(row => row.length > 0 && row[0]?.toLowerCase() !== lowercasedEmail);
-    const otherUsersSettings = allSettings.slice(1).filter(row => row.length > 0 && row[0]?.toLowerCase() !== lowercasedEmail);
-    const otherUsersDebts = allDebts.slice(1).filter(row => row.length > 0 && row[0]?.toLowerCase() !== lowercasedEmail);
-    
-    // Prepare new data for the current user
-    const newTransactionRows = transactions.map(t => [lowercasedEmail, t.id, t.type, t.category, t.amount, t.date]);
-    const newCategoryRows = categories.map(c => [lowercasedEmail, c.id, c.name, c.icon, c.type, c.isFixed ? 'TRUE' : 'FALSE']);
-    const newSettingsRow = [lowercasedEmail, limit];
-    const newDebtRows = debts.map(d => [lowercasedEmail, d.id, d.debtorName, d.amount, d.description, d.dueDate, d.status, d.icon]);
-    
-    const finalTransactions = [allTransactions[0], ...otherUsersTransactions, ...newTransactionRows];
-    const finalCategories = [allCategories[0], ...otherUsersCategories, ...newCategoryRows];
-    const finalSettings = [allSettings[0], ...otherUsersSettings, newSettingsRow];
-    const finalDebts = [allDebts[0], ...otherUsersDebts, ...newDebtRows];
-    
-    try {
-        await sheets.spreadsheets.values.batchUpdate({
-            spreadsheetId: SHEET_ID,
-            requestBody: {
-                valueInputOption: 'USER_ENTERED',
-                data: [
-                    { range: TRANSACTION_RANGE, values: finalTransactions },
-                    { range: CATEGORY_RANGE, values: finalCategories },
-                    { range: SETTINGS_RANGE, values: finalSettings },
-                    { range: DEBT_RANGE, values: finalDebts }
-                ]
-            }
-        });
-    } catch (err) {
-        console.error('The API returned an error during batch update: ' + err);
-        if (err instanceof Error) {
-            throw new Error(`Failed to write data to Google Sheet: ${err.message}`);
-        }
-        throw new Error('Failed to write data to Google Sheet due to an unknown error.');
+    if (rowIndex > 0) { // Found existing setting
+        await updateRow(SETTINGS_SHEET_NAME, rowIndex + 1, [lowercasedEmail, limit]);
+    } else { // No setting found, append new row
+        await appendRow(SETTINGS_RANGE, [lowercasedEmail, limit]);
     }
 }

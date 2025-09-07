@@ -5,7 +5,14 @@ import { generateMonthlyReport } from "@/ai/flows/generate-ai-monthly-report";
 import type { Transaction, Category, Debt } from "@/lib/types";
 import {
     getUserDataFromSheet,
-    writeUserDataToSheet
+    addTransactionToSheet,
+    addCategoryToSheet,
+    addDebtToSheet,
+    deleteTransactionFromSheet,
+    deleteCategoryFromSheet,
+    deleteDebtFromSheet,
+    updateDebtInSheet,
+    updateSpendingLimitInSheet
 } from '@/lib/sheets';
 import { format } from "date-fns";
 
@@ -38,7 +45,6 @@ export async function generateMonthlyReportAction(
   }
 }
 
-
 export async function getUserData(email: string) {
     try {
         const data = await getUserDataFromSheet(email);
@@ -50,6 +56,7 @@ export async function getUserData(email: string) {
     }
 }
 
+<<<<<<< HEAD
 
 export async function saveUserData(
     email: string,
@@ -60,11 +67,55 @@ export async function saveUserData(
 ) {
     try {
         await writeUserDataToSheet(email, transactions, categories, limit, debts);
+=======
+export async function addTransactionAction(email: string, transactionData: Omit<Transaction, 'id'>) {
+    try {
+        const newTransaction: Transaction = {
+            ...transactionData,
+            id: crypto.randomUUID(),
+        };
+        await addTransactionToSheet(email, newTransaction);
+        return { success: true, transaction: newTransaction };
+    } catch (error) {
+        console.error("Error adding transaction:", error);
+        return { success: false, error: "Failed to add transaction." };
+    }
+}
+
+export async function addCategoryAction(email: string, categoryData: Omit<Category, 'id' | 'isFixed' | 'icon'>) {
+    try {
+        const newCategory: Category = {
+            ...categoryData,
+            id: crypto.randomUUID(),
+            isFixed: false,
+            icon: 'Tag',
+        };
+        await addCategoryToSheet(email, newCategory);
+        return { success: true, category: newCategory };
+    } catch (error) {
+        console.error("Error adding category:", error);
+        return { success: false, error: "Failed to add category." };
+    }
+}
+
+export async function deleteCategoryAction(categoryId: string) {
+    try {
+        await deleteCategoryFromSheet(categoryId);
+>>>>>>> 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
         return { success: true };
     } catch (error) {
-        console.error("Error saving user data to sheet:", error);
-        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-        return { success: false, error: `Sync Error: ${errorMessage}` };
+        console.error("Error deleting category:", error);
+        return { success: false, error: "Failed to delete category." };
+    }
+}
+
+export async function setSpendingLimitAction(email: string, limit: number) {
+    try {
+        await updateSpendingLimitInSheet(email, limit);
+        return { success: true };
+    } catch (error) {
+        console.error("Error setting spending limit:", error);
+        return { success: false, error: "Failed to set spending limit." };
     }
 }
 
@@ -79,10 +130,19 @@ export async function getDebts(email: string): Promise<{ success: boolean, data?
   }
 }
 
+<<<<<<< HEAD
 export async function settleDebtAction(email: string, debtId: string): Promise<{ success: boolean, error?: string, debts?: Debt[], transactions?: Transaction[] }> {
+=======
+export async function addDebtAction(
+    email: string, 
+    debtData: Omit<Debt, 'id' | 'status' | 'lendingTransactionId' | 'repaymentTransactionId'>
+): Promise<{ success: boolean; error?: string; newDebt?: Debt, newTransaction?: Transaction }> {
+>>>>>>> 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
     try {
-        const { transactions, categories, spendingLimit, debts } = await getUserDataFromSheet(email);
+        const lendingTransactionId = crypto.randomUUID();
+        const newDebtId = crypto.randomUUID();
 
+<<<<<<< HEAD
         const debtToSettle = debts.find(d => d.id === debtId);
         if (!debtToSettle || debtToSettle.status === 'paid') {
             return { success: false, error: "Debt not found or already paid." };
@@ -96,20 +156,73 @@ export async function settleDebtAction(email: string, debtId: string): Promise<{
             type: 'income',
             category: 'Debt Repayment',
             amount: debtToSettle.amount,
+=======
+        const newExpenseTransaction: Transaction = {
+            id: lendingTransactionId,
+            type: 'expense',
+            category: 'Lending',
+            amount: debtData.amount,
+>>>>>>> 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
             date: format(new Date(), "yyyy-MM-dd"),
         };
-        const updatedTransactions = [...transactions, newTransaction];
 
+<<<<<<< HEAD
         // 2. Update the debt status and link transaction
         const updatedDebts = debts.map(d => 
             d.id === debtId ? { ...d, status: 'paid' as const, repaymentTransactionId: repaymentTransactionId } : d
         );
+=======
+        const newDebt: Debt = {
+            ...debtData,
+            id: newDebtId,
+            status: 'unpaid',
+            lendingTransactionId: lendingTransactionId,
+        };
+>>>>>>> 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
 
-        // 3. Save everything back to the sheet
-        await writeUserDataToSheet(email, updatedTransactions, categories, spendingLimit, updatedDebts);
+        await addTransactionToSheet(email, newExpenseTransaction);
+        await addDebtToSheet(email, newDebt);
 
+<<<<<<< HEAD
         return { success: true, debts: updatedDebts, transactions: updatedTransactions };
+=======
+        return { success: true, newDebt, newTransaction: newExpenseTransaction };
+    } catch (error) {
+        console.error("Error adding debt:", error);
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        return { success: false, error: `Add Debt Error: ${errorMessage}` };
+    }
+}
+>>>>>>> 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
 
+export async function settleDebtAction(
+    email: string, 
+    debt: Debt
+): Promise<{ success: boolean; error?: string; updatedDebt?: Debt, newTransaction?: Transaction }> {
+    try {
+        if (debt.status === 'paid') {
+            return { success: false, error: "Debt already paid." };
+        }
+
+        const repaymentTransactionId = crypto.randomUUID();
+        const newIncomeTransaction: Transaction = {
+            id: repaymentTransactionId,
+            type: 'income',
+            category: 'Debt Repayment',
+            amount: debt.amount,
+            date: format(new Date(), "yyyy-MM-dd"),
+        };
+
+        const updatedDebt: Debt = {
+            ...debt,
+            status: 'paid',
+            repaymentTransactionId: repaymentTransactionId,
+        };
+
+        await addTransactionToSheet(email, newIncomeTransaction);
+        await updateDebtInSheet(email, updatedDebt);
+
+        return { success: true, updatedDebt, newTransaction: newIncomeTransaction };
     } catch (error) {
         console.error("Error settling debt:", error);
         const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
@@ -117,6 +230,7 @@ export async function settleDebtAction(email: string, debtId: string): Promise<{
     }
 }
 
+<<<<<<< HEAD
 export async function addDebtAction(
     email: string, 
     debtData: Omit<Debt, 'id' | 'status' | 'lendingTransactionId' | 'repaymentTransactionId'>
@@ -145,16 +259,42 @@ export async function addDebtAction(
             date: format(new Date(), "yyyy-MM-dd"),
         };
         const updatedTransactions = [...transactions, newExpenseTransaction];
+=======
+export async function deleteTransactionAction(
+    transactionToDelete: Transaction,
+    allDebts: Debt[]
+): Promise<{ success: boolean, error?: string, deletedDebtId?: string, updatedDebt?: Debt }> {
+    try {
+        await deleteTransactionFromSheet(transactionToDelete.id);
 
-        // 3. Save everything back to the sheet
-        await writeUserDataToSheet(email, updatedTransactions, categories, spendingLimit, updatedDebts);
+        const relatedLendingDebt = allDebts.find(d => d.lendingTransactionId === transactionToDelete.id);
+        if (relatedLendingDebt) {
+            await deleteDebtFromSheet(relatedLendingDebt.id);
+            return { success: true, deletedDebtId: relatedLendingDebt.id };
+        }
+>>>>>>> 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
 
+        const relatedRepaymentDebt = allDebts.find(d => d.repaymentTransactionId === transactionToDelete.id);
+        if (relatedRepaymentDebt) {
+            const updatedDebt: Debt = {
+                ...relatedRepaymentDebt,
+                status: 'unpaid',
+                repaymentTransactionId: undefined,
+            };
+            const userEmail = "email-is-not-needed-for-update"; // This is a placeholder as email is not used in updateRow logic anymore
+            await updateDebtInSheet(userEmail, updatedDebt);
+            return { success: true, updatedDebt };
+        }
+
+<<<<<<< HEAD
         return { success: true, debts: updatedDebts, transactions: updatedTransactions };
         
+=======
+        return { success: true };
+>>>>>>> 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
     } catch (error) {
-        console.error("Error adding debt:", error);
-        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-        return { success: false, error: `Add Debt Error: ${errorMessage}` };
+        console.error("Error deleting transaction:", error);
+        return { success: false, error: "Failed to delete transaction and related records." };
     }
 }
 
