@@ -108,5 +108,3 @@ export default function DebtForm({ onAddDebt }: DebtFormProps) {
     </Form>
   );
 }
-
-    
