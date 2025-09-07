@@ -261,7 +261,7 @@ export default function DebtPage() {
                                                     </AlertDialogHeader>
                                                     <AlertDialogFooter>
                                                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => deleteDebt(debt)}>
+                                                    <AlertDialogAction onClick={() => deleteDebt(debt)} disabled={isSyncing}>
                                                         Continue
                                                     </AlertDialogAction>
                                                     </AlertDialogFooter>
