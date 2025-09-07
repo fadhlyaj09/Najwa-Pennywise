@@ -1,10 +1,10 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import NextLink from 'next/link';
 import { useRouter } from "next/navigation";
-import { PlusCircle, Tags, LogOut, BookUser, MoreVertical } from "lucide-react";
+import { PlusCircle, Tags, LogOut, BookUser, MoreVertical, Loader2, Cloud, CloudOff } from "lucide-react";
 import type { Transaction, Category } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import SummaryCards from "@/components/pennywise/SummaryCards";
@@ -18,6 +18,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { useAuth } from "@/hooks/use-auth";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import { getUserData, saveUserData } from "@/lib/actions";
+import { useDebouncedCallback } from "use-debounce";
+
 
 const fixedCategoriesData: Omit<Category, 'id'>[] = [
     { name: 'Salary', icon: 'Landmark', type: 'income', isFixed: true },
@@ -44,66 +47,92 @@ export default function Dashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [spendingLimit, setSpendingLimit] = useState<number>(5000000);
-  const [isLoaded, setIsLoaded] = useState(false);
+  
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const { toast } = useToast();
 
-  const transactionsKey = useMemo(() => userEmail ? `pennywise_transactions_${userEmail}` : null, [userEmail]);
-  const categoriesKey = useMemo(() => userEmail ? `pennywise_categories_${userEmail}` : null, [userEmail]);
-  const limitKey = useMemo(() => userEmail ? `pennywise_limit_${userEmail}` : null, [userEmail]);
-
-  // Effect to load data from localStorage
-  useEffect(() => {
-    if (userEmail && !isLoaded) {
-      const storedTransactionsJson = localStorage.getItem(transactionsKey!);
-      const storedCategoriesJson = localStorage.getItem(categoriesKey!);
-      const storedLimitJson = localStorage.getItem(limitKey!);
-
-      let loadedTransactions: Transaction[] = [];
-      if (storedTransactionsJson) {
-        try { loadedTransactions = JSON.parse(storedTransactionsJson); } 
-        catch (e) { console.error("Failed to parse transactions:", e); }
-      }
-      setTransactions(loadedTransactions);
-
-      let userCategories: Category[] = [];
-      if (storedCategoriesJson) {
-          try { userCategories = JSON.parse(storedCategoriesJson); } 
-          catch (e) { console.error("Failed to parse categories:", e); }
-      }
-
-      const missingFixedCategories = fixedCategoriesData.filter(
-        fc => !userCategories.some(uc => uc.name === fc.name && uc.type === fc.type)
-      );
-      
-      const finalCategories = [...userCategories, ...missingFixedCategories.map(c => ({...c, id: crypto.randomUUID()}))];
-      setCategories(finalCategories);
-      
-      if (storedLimitJson) {
-        try { setSpendingLimit(JSON.parse(storedLimitJson)); } 
-        catch (e) { console.error("Failed to parse limit:", e); }
-      }
-
-      setIsLoaded(true);
+  const debouncedSave = useDebouncedCallback(async (email: string, trans: Transaction[], cats: Category[], limit: number) => {
+    setIsSyncing(true);
+    const result = await saveUserData(email, trans, cats, limit);
+    if (!result.success) {
+      toast({
+        variant: "destructive",
+        title: "Sync Error",
+        description: result.error || "Could not save data to the cloud."
+      });
+      setError(result.error || "Sync failed");
     }
-  }, [userEmail, isLoaded, transactionsKey, categoriesKey, limitKey]);
+    setIsSyncing(false);
+  }, 2000);
 
-  // Effect to save data to localStorage
+
   useEffect(() => {
-    if (isLoaded && transactionsKey && categoriesKey && limitKey) {
-        localStorage.setItem(transactionsKey, JSON.stringify(transactions));
-        localStorage.setItem(categoriesKey, JSON.stringify(categories.filter(c => !c.isFixed)));
-        localStorage.setItem(limitKey, JSON.stringify(spendingLimit));
-    }
-  }, [transactions, categories, spendingLimit, isLoaded, transactionsKey, categoriesKey, limitKey]);
+    if (!userEmail) {
+        setIsLoading(false);
+        return;
+    };
 
+    const loadData = async () => {
+        setIsLoading(true);
+        setError(null);
+        
+        const result = await getUserData(userEmail);
+        
+        if (result.success && result.data) {
+            setTransactions(result.data.transactions || []);
+            setSpendingLimit(result.data.spendingLimit || 5000000);
+            
+            const userCategories = result.data.categories || [];
+            const missingFixedCategories = fixedCategoriesData.filter(
+                fc => !userCategories.some(uc => uc.name === fc.name && uc.type === fc.type)
+            );
+      
+            const finalCategories = [...userCategories, ...missingFixedCategories.map(c => ({...c, id: crypto.randomUUID()}))];
+            setCategories(finalCategories);
+
+        } else {
+            setError(result.error || 'Failed to load data.');
+             toast({
+                variant: "destructive",
+                title: "Loading Error",
+                description: result.error || "Could not load data from the cloud."
+            });
+        }
+        setIsLoading(false);
+    }
+    loadData();
+  }, [userEmail, toast]);
+
+
+  const saveData = useCallback((
+    newTransactions: Transaction[],
+    newCategories: Category[],
+    newLimit: number
+  ) => {
+      if (!userEmail) return;
+      setTransactions(newTransactions);
+      setCategories(newCategories);
+      setSpendingLimit(newLimit);
+      debouncedSave(userEmail, newTransactions, newCategories, newLimit);
+  }, [userEmail, debouncedSave]);
+  
 
   const addTransaction = (transaction: Omit<Transaction, "id">) => {
     const categoryExists = categories.some(c => c.name.toLowerCase() === transaction.category.toLowerCase() && c.type === transaction.type);
+    
+    let updatedCategories = categories;
     if (!categoryExists) {
-        addCategory({ name: transaction.category, type: transaction.type });
+        const newCategory: Category = { name: transaction.category, type: transaction.type, id: crypto.randomUUID(), icon: 'Tag', isFixed: false };
+        updatedCategories = [...categories, newCategory];
     }
+
     const newTransaction = { ...transaction, id: crypto.randomUUID() };
-    setTransactions(prev => [newTransaction, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+    const updatedTransactions = [newTransaction, ...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    saveData(updatedTransactions, updatedCategories, spendingLimit);
     setTransactionFormOpen(false);
     
     const randomMessage = najwaCompliments[Math.floor(Math.random() * najwaCompliments.length)];
@@ -114,19 +143,18 @@ export default function Dashboard() {
   };
   
   const addCategory = (category: Omit<Category, "id" | 'isFixed' | 'icon'>) => {
-    setCategories(prev => {
-        const existingCategory = prev.find(c => c.name.toLowerCase() === category.name.toLowerCase() && c.type === category.type);
-        if (existingCategory) {
-           toast({
-             variant: 'destructive',
-             title: 'Category exists',
-             description: `Category "${category.name}" for ${category.type} already exists.`
-           });
-           return prev; 
-        }
-        const newCategory: Category = { ...category, id: crypto.randomUUID(), icon: 'Tag', isFixed: false };
-        return [...prev, newCategory];
-    });
+    const existingCategory = categories.find(c => c.name.toLowerCase() === category.name.toLowerCase() && c.type === category.type);
+    if (existingCategory) {
+        toast({
+            variant: 'destructive',
+            title: 'Category exists',
+            description: `Category "${category.name}" for ${category.type} already exists.`
+        });
+        return; 
+    }
+    const newCategory: Category = { ...category, id: crypto.randomUUID(), icon: 'Tag', isFixed: false };
+    const updatedCategories = [...categories, newCategory];
+    saveData(transactions, updatedCategories, spendingLimit);
   };
   
   const deleteCategory = (id: string) => {
@@ -152,12 +180,16 @@ export default function Dashboard() {
         });
         return;
     }
-
-    setCategories(prev => prev.filter(c => c.id !== id));
+    const updatedCategories = categories.filter(c => c.id !== id);
+    saveData(transactions, updatedCategories, spendingLimit);
     toast({
       title: 'Success!',
       description: `Category "${categoryToDelete.name}" has been deleted.`
     });
+  };
+
+  const handleSetSpendingLimit = (newLimit: number) => {
+    saveData(transactions, categories, newLimit);
   };
   
   const { income, expenses, balance } = useMemo(() => {
@@ -186,6 +218,14 @@ export default function Dashboard() {
       .sort((a,b) => a.name.localeCompare(b.name));
   }, [categories]);
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-10 w-10 animate-spin" />
+      </div>
+    );
+  }
+
 
   return (
     <div className="flex flex-col min-h-screen bg-background overflow-x-hidden">
@@ -198,6 +238,11 @@ export default function Dashboard() {
           </NextLink>
           <div className="flex items-center gap-2">
             
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mr-2">
+              {isSyncing ? <Loader2 className="h-4 w-4 animate-spin" /> : (error ? <CloudOff className="h-4 w-4 text-destructive" /> : <Cloud className="h-4 w-4 text-green-500" />) }
+              <span className="hidden md:inline">{isSyncing ? "Syncing..." : (error ? "Sync Failed" : "Synced")}</span>
+            </div>
+
             <Dialog open={transactionFormOpen} onOpenChange={setTransactionFormOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" className="relative">
@@ -276,6 +321,11 @@ export default function Dashboard() {
       </header>
       
       <main className="flex-1 w-full max-w-5xl mx-auto p-4 md:p-6">
+        {error && !isLoading && (
+            <div className="bg-destructive/10 text-destructive border border-destructive/20 rounded-md p-4 mb-6 text-sm">
+                <p><strong>Loading Error:</strong> {error} Please check your connection or try refreshing the page.</p>
+            </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-3">
                 <SummaryCards 
@@ -283,7 +333,7 @@ export default function Dashboard() {
                 expenses={expenses}
                 balance={balance}
                 spendingLimit={spendingLimit}
-                onSetSpendingLimit={setSpendingLimit}
+                onSetSpendingLimit={handleSetSpendingLimit}
                 />
             </div>
           <div className="col-span-1 md:col-span-1 lg:col-span-2 flex flex-col gap-6">

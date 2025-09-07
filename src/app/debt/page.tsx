@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import NextLink from 'next/link';
-import { PlusCircle, LogOut, ArrowLeft, Loader2 } from 'lucide-react';
+import { PlusCircle, LogOut, ArrowLeft, Loader2, Cloud, CloudOff } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/use-auth";
@@ -16,41 +16,78 @@ import { format, parseISO } from "date-fns";
 import DebtForm from "@/components/pennywise/DebtForm";
 import { useToast } from "@/hooks/use-toast";
 import { formatRupiah } from "@/lib/utils";
+import { getDebts, saveDebts } from "@/lib/actions";
+import { useDebouncedCallback } from "use-debounce";
 
 
 export default function DebtPage() {
-  const { logout, isAuthenticated, isLoading: isAuthLoading, userEmail } = useAuth();
+  const { logout, isAuthenticated, isAuthLoading, userEmail } = useAuth();
   const [debts, setDebts] = useState<Debt[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
+  
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const { toast } = useToast();
 
-  const debtsKey = useMemo(() => userEmail ? `pennywise_debts_${userEmail}` : null, [userEmail]);
+  const debouncedSave = useDebouncedCallback(async (email: string, debtsToSave: Debt[]) => {
+    setIsSyncing(true);
+    const result = await saveDebts(email, debtsToSave);
+    if (!result.success) {
+      toast({
+        variant: "destructive",
+        title: "Sync Error",
+        description: result.error || "Could not save debt records to the cloud."
+      });
+      setError(result.error || "Sync failed");
+    }
+    setIsSyncing(false);
+  }, 2000);
 
   useEffect(() => {
-    if (userEmail && !isLoaded) {
-      const storedDebts = localStorage.getItem(debtsKey!);
-      if (storedDebts) {
-        try {
-          setDebts(JSON.parse(storedDebts));
-        } catch (e) {
-          console.error("Failed to parse debts from localStorage", e);
-          setDebts([]);
-        }
-      }
-      setIsLoaded(true);
+    if (isAuthLoading) {
+      return;
     }
-  }, [userEmail, isLoaded, debtsKey]);
+    if (!isAuthenticated) {
+      // Redirect handled by useAuth or page wrapper
+      setIsLoading(false);
+      return;
+    }
+    if (userEmail) {
+        const loadData = async () => {
+            setIsLoading(true);
+            setError(null);
+            const result = await getDebts(userEmail);
 
-  useEffect(() => {
-    if (isLoaded && debtsKey) {
-      localStorage.setItem(debtsKey, JSON.stringify(debts));
+            if (result.success && result.data) {
+                setDebts(result.data);
+            } else {
+                setError(result.error || 'Failed to load debt data.');
+                toast({
+                    variant: "destructive",
+                    title: "Loading Error",
+                    description: result.error || "Could not load debt records from the cloud."
+                });
+            }
+            setIsLoading(false);
+        };
+        loadData();
     }
-  }, [debts, isLoaded, debtsKey]);
+  }, [userEmail, isAuthenticated, isAuthLoading, toast]);
+
+
+  const saveData = useCallback((newDebts: Debt[]) => {
+      if (!userEmail) return;
+      setDebts(newDebts);
+      debouncedSave(userEmail, newDebts);
+  }, [userEmail, debouncedSave]);
+
 
   const addDebt = (debt: Omit<Debt, 'id' | 'status'>) => {
     const newDebt: Debt = { ...debt, id: crypto.randomUUID(), status: 'unpaid' };
-    setDebts(prev => [newDebt, ...prev].sort((a,b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime()));
+    const updatedDebts = [newDebt, ...debts].sort((a,b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
+    saveData(updatedDebts);
     setIsFormOpen(false);
     toast({
         title: "Success!",
@@ -59,7 +96,8 @@ export default function DebtPage() {
   };
 
   const markAsPaid = (id: string) => {
-    setDebts(prev => prev.map(d => d.id === id ? { ...d, status: 'paid' } : d));
+    const updatedDebts = debts.map(d => d.id === id ? { ...d, status: 'paid' } : d);
+    saveData(updatedDebts);
     toast({
         title: "Debt Settled!",
         description: "The debt has been marked as paid."
@@ -73,9 +111,18 @@ export default function DebtPage() {
     return { unpaidDebts: unpaid, paidDebts: paid, totalUnpaid: total };
   }, [debts]);
   
-  if (isAuthLoading || !isAuthenticated) {
+  if (isAuthLoading || isLoading) {
      return (
       <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-10 w-10 animate-spin" />
+      </div>
+    );
+  }
+  
+  if (!isAuthenticated) {
+     return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p>Redirecting to login...</p>
         <Loader2 className="h-10 w-10 animate-spin" />
       </div>
     );
@@ -94,6 +141,11 @@ export default function DebtPage() {
             <h1 className="text-xl font-bold tracking-tight text-foreground">Debt Ledger</h1>
           </div>
           <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              {isSyncing ? <Loader2 className="h-4 w-4 animate-spin" /> : (error ? <CloudOff className="h-4 w-4 text-destructive" /> : <Cloud className="h-4 w-4 text-green-500" />) }
+              <span className="hidden md:inline">{isSyncing ? "Syncing..." : (error ? "Sync Failed" : "Synced")}</span>
+            </div>
+
             <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
                 <DialogTrigger asChild>
                     <Button>
@@ -118,6 +170,11 @@ export default function DebtPage() {
       </header>
 
       <main className="flex-1 container py-6">
+        {error && !isLoading && (
+            <div className="bg-destructive/10 text-destructive border border-destructive/20 rounded-md p-4 mb-6 text-sm">
+                <p><strong>Loading Error:</strong> {error} Please check your connection or try refreshing the page.</p>
+            </div>
+        )}
         <Card className="mb-6">
             <CardHeader>
                 <CardTitle>Total Unpaid Debt</CardTitle>
@@ -187,5 +244,3 @@ export default function DebtPage() {
     </div>
   );
 }
-
-    
