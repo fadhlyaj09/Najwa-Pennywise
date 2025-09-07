@@ -44,18 +44,18 @@ Data:
 {{{transactionHistory}}}
 
 Structure your HTML report as follows:
-1.  **Ringkasan Bulan Ini**: Start with a friendly opening. Summarize total income, expenses, and net savings (income - expenses). Mention if they are within their spending limit.
-2.  **Analisis Pengeluaran**: Create a section to analyze spending.
-    -   Show a breakdown of spending by category.
+1.  <h4>Ringkasan Bulan Ini</h4>: Start with a friendly opening. Summarize total income, expenses, and net savings (income - expenses). Mention if they are within their spending limit.
+2.  <h4>Analisis Pengeluaran</h4>: Create a section to analyze spending.
+    -   Show a breakdown of spending by category in a simple paragraph or list.
     -   Identify the top 3 spending categories.
     -   Provide specific, actionable insights based on their spending habits. For example, if 'Hangout' is high, suggest cheaper alternatives.
-3.  **Saran & Rekomendasi**: Offer encouraging advice and concrete suggestions for the next month.
+3.  <h4>Saran & Rekomendasi</h4>: Offer encouraging advice and concrete suggestions for the next month.
     -   Suggest realistic budget adjustments.
     -   Give tips to increase savings or reduce specific expenses.
-4.  **Closing**: End with a motivational and positive closing statement, signed off with "Salam hangat,<br>Fadhly Aziez Jalaluddin".
+4.  <h4>Closing</h4>: End with a motivational and positive closing statement, signed off with "Salam hangat,<br>Fadhly Aziez Jalaluddin".
 
 Formatting Rules:
-- Use HTML tags like <h1>, <h2>, <h3> for titles, <p> for paragraphs, <ul> and <li> for lists, and <strong> or <b> for emphasis.
+- Use HTML tags like <h4> for section titles, <p> for paragraphs, <ul> and <li> for lists, and <strong> or <b> for emphasis.
 - Format all currency values using 'Rp' prefix and standard Indonesian number formatting (e.g., Rp 1.500.000).
 - Keep the tone encouraging, not judgmental.
 `,

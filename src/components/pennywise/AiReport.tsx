@@ -90,7 +90,7 @@ const AiReport = ({ transactions, spendingLimit, income, expenses }: AiReportPro
                         </DialogDescription>
                     </DialogHeader>
                     <ScrollArea className="h-[60vh] pr-4">
-                        <div className="prose prose-sm dark:prose-invert" dangerouslySetInnerHTML={{ __html: report || "" }} />
+                        <div className="text-sm text-foreground space-y-4" dangerouslySetInnerHTML={{ __html: report || "" }} />
                     </ScrollArea>
                 </DialogContent>
             </Dialog>
