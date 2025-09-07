@@ -305,8 +305,3 @@ export default function DebtPage() {
     </div>
   );
 }
-
-<<<<<<< HEAD
-=======
-    
->>>>>>> f228435 (masih blm ada loh)

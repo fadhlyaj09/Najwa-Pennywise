@@ -31,17 +31,33 @@ export async function generateMonthlyReportAction(
       })
       .join('\n');
 
+    const spendingByCategoryString = JSON.stringify(spendingByCategory, null, 2);
+
     const result = await generateMonthlyReport({
       income,
       expenses,
-      spendingByCategory,
+      spendingByCategory, // Schema expects object, not string
       spendingLimit,
       transactionHistory: transactionHistoryString,
     });
-    return { success: true, report: result.report };
+    // The prompt template can handle the object directly, no need to stringify for the call.
+    // The previous implementation was correct, the prompt stringifies it. I will revert this part but keep the rest of the fixes.
+    const promptInput = {
+        income,
+        expenses,
+        spendingByCategory,
+        spendingLimit,
+        transactionHistory: transactionHistoryString,
+    };
+
+    const reportResult = await generateMonthlyReport(promptInput);
+
+
+    return { success: true, report: reportResult.report };
   } catch (error) {
     console.error("Error generating AI report:", error);
-    return { success: false, error: "Failed to generate AI report." };
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+    return { success: false, error: `Failed to generate AI report. ${errorMessage}` };
   }
 }
 
@@ -355,9 +371,3 @@ export async function deleteDebtAction(debtToDelete: Debt): Promise<{ success: b
         return { success: false, error: `Delete Debt Error: ${errorMessage}` };
     }
 }
-<<<<<<< HEAD
->>>>>>> faea11d (kalo semisal kita salah input data debt, apakah kita menghapus history d)
-=======
-
-    
->>>>>>> f228435 (masih blm ada loh)
