@@ -62,7 +62,7 @@ export default function DebtPage() {
   }, [userEmail, isAuthenticated, isAuthLoading, toast]);
 
 
-  const addDebt = async (debtData: Omit<Debt, 'id' | 'status'>) => {
+  const addDebt = async (debtData: Omit<Debt, 'id' | 'status' | 'lendingTransactionId' | 'repaymentTransactionId'>) => {
     if (!userEmail) return;
 
     setIsSyncing(true);
@@ -258,3 +258,4 @@ export default function DebtPage() {
     </div>
   );
 }
+

@@ -26,7 +26,7 @@ const formSchema = z.object({
 });
 
 interface DebtFormProps {
-  onAddDebt: (debt: Omit<Debt, 'id' | 'status'>) => void;
+  onAddDebt: (debt: Omit<Debt, 'id' | 'status' | 'lendingTransactionId' | 'repaymentTransactionId'>) => void;
 }
 
 export default function DebtForm({ onAddDebt }: DebtFormProps) {

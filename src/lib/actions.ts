@@ -119,7 +119,7 @@ export async function settleDebtAction(email: string, debtId: string): Promise<{
 
 export async function addDebtAction(
     email: string, 
-    debtData: Omit<Debt, 'id' | 'status'>
+    debtData: Omit<Debt, 'id' | 'status' | 'lendingTransactionId' | 'repaymentTransactionId'>
 ): Promise<{ success: boolean, error?: string, debts?: Debt[], transactions?: Transaction[] }> {
     try {
         const { transactions, categories, spendingLimit, debts } = await getUserDataFromSheet(email);
