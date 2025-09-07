@@ -30,12 +30,12 @@ const fixedCategoriesData: Omit<Category, 'id'>[] = [
 ];
 
 const najwaCompliments = [
-    "Transaksi tercatat! Hebat sekali, Najwa cantik!",
-    "Keren, Najwa cantik! Pengelolaan keuanganmu luar biasa.",
-    "Luar biasa, Najwa cantik! Kamu semakin pintar mengelola uang.",
-    "Tercatat! Cara Najwa cantik mengatur keuangan sangat menginspirasi.",
-    "Bagus sekali, Najwa cantik! Teruslah menjadi manajer keuangan yang andal.",
-    "Hebat, Najwa cantik! Selangkah lebih dekat menuju kebebasan finansial.",
+    "Asiiik, transaksi masuk! Najwa cantik emang paling jago ngatur duit.",
+    "Cakep! Duitnya langsung kecatet. Emang a-class banget Najwa cantik.",
+    "Gokil! Keuanganmu makin kece, Najwa cantik. Lanjutkan!",
+    "Mantap jiwa, Najwa cantik! Duit aman, hati senang.",
+    "Wih, gercep banget! Najwa cantik emang paling top soal cuan.",
+    "Keren abis, Najwa cantik! Financial goals makin deket nih.",
 ];
 
 export default function Dashboard() {
