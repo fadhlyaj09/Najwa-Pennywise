@@ -29,12 +29,12 @@ const fixedCategoriesData: Omit<Category, 'id'>[] = [
     { name: 'Monthly Shopping', icon: 'ShoppingBag', type: 'expense', isFixed: true },
 ];
 
-const successMessages = [
-    "Transaction recorded successfully!",
-    "Noted! One step closer to your financial goals.",
-    "Excellent! Keep up the great work.",
-    "Logged! Every penny counts.",
-    "Awesome! Your finances are getting more organized.",
+const najwaCompliments = [
+    "Keren, Najwa! Pengelolaan keuanganmu secantik dirimu.",
+    "Luar biasa, Najwa! Setiap transaksi membuatmu semakin pintar mengelola uang.",
+    "Tercatat! Najwa, caramu mengatur keuangan sangat menginspirasi.",
+    "Bagus sekali, Najwa! Teruslah menjadi manajer keuangan yang andal.",
+    "Hebat, Najwa! Selangkah lebih dekat menuju kebebasan finansial.",
 ];
 
 export default function Dashboard() {
@@ -105,7 +105,7 @@ export default function Dashboard() {
     setTransactions(prev => [newTransaction, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     setTransactionFormOpen(false);
     
-    const randomMessage = successMessages[Math.floor(Math.random() * successMessages.length)];
+    const randomMessage = najwaCompliments[Math.floor(Math.random() * najwaCompliments.length)];
     toast({
       title: "Success!",
       description: randomMessage,
