@@ -64,67 +64,42 @@ export default function Dashboard() {
       const storedCategoriesJson = localStorage.getItem(categoriesKey!);
       const storedLimitJson = localStorage.getItem(limitKey!);
 
-      let userCategories: Category[] = [];
-      if (storedCategoriesJson) {
-          try {
-              userCategories = JSON.parse(storedCategoriesJson);
-          } catch (e) {
-              console.error("Failed to parse categories:", e);
-          }
+      if (storedTransactionsJson) {
+        try { setTransactions(JSON.parse(storedTransactionsJson)); } 
+        catch (e) { console.error("Failed to parse transactions:", e); }
       }
 
-      // Check if fixed categories are present, if not, add them
+      let userCategories: Category[] = [];
+      if (storedCategoriesJson) {
+          try { userCategories = JSON.parse(storedCategoriesJson); } 
+          catch (e) { console.error("Failed to parse categories:", e); }
+      }
+
       const missingFixedCategories = fixedCategoriesData.filter(
         fc => !userCategories.some(uc => uc.name === fc.name && uc.type === fc.type)
       );
       
-      let finalCategories = [...userCategories];
-      if(missingFixedCategories.length > 0) {
-          finalCategories = [...finalCategories, ...missingFixedCategories.map(c => ({...c, id: crypto.randomUUID()}))];
-      }
+      const finalCategories = [...userCategories, ...missingFixedCategories.map(c => ({...c, id: crypto.randomUUID()}))];
       setCategories(finalCategories);
       
-      if (storedTransactionsJson) {
-        try {
-          setTransactions(JSON.parse(storedTransactionsJson));
-        } catch (e) { 
-          console.error("Failed to parse transactions:", e);
-          setTransactions([]);
-        }
-      } else {
-        setTransactions([]);
+      if (storedLimitJson) {
+        try { setSpendingLimit(JSON.parse(storedLimitJson)); } 
+        catch (e) { console.error("Failed to parse limit:", e); }
       }
 
-      if (storedLimitJson) {
-        try {
-            setSpendingLimit(JSON.parse(storedLimitJson));
-        } catch (e) { 
-            console.error("Failed to parse limit:", e);
-            setSpendingLimit(5000000);
-        }
-      } else {
-        setSpendingLimit(5000000);
-      }
-      
       setIsLoaded(true);
-    } else if (!userEmail) {
-      // If user logs out, reset the loaded state so data will reload for the next user.
-      setIsLoaded(false);
-      setTransactions([]);
-      setCategories([]);
     }
   }, [userEmail, isLoaded, transactionsKey, categoriesKey, limitKey]);
 
   // Effect to save data to localStorage
   useEffect(() => {
-    // This guard is critical. Only save when data has been loaded for a specific user.
-    if (!isLoaded || !transactionsKey || !categoriesKey || !limitKey) {
-        return;
+    if (isLoaded && transactionsKey && categoriesKey && limitKey) {
+        localStorage.setItem(transactionsKey, JSON.stringify(transactions));
+        localStorage.setItem(categoriesKey, JSON.stringify(categories));
+        localStorage.setItem(limitKey, JSON.stringify(spendingLimit));
     }
-    localStorage.setItem(transactionsKey, JSON.stringify(transactions));
-    localStorage.setItem(categoriesKey, JSON.stringify(categories));
-    localStorage.setItem(limitKey, JSON.stringify(spendingLimit));
   }, [transactions, categories, spendingLimit, isLoaded, transactionsKey, categoriesKey, limitKey]);
+
 
   const addTransaction = (transaction: Omit<Transaction, "id">) => {
     // Auto-create category if it doesn't exist
@@ -163,7 +138,6 @@ export default function Dashboard() {
     const categoryToDelete = categories.find(c => c.id === id);
     if (!categoryToDelete) return;
 
-    // Prevent deleting fixed categories
     if (categoryToDelete.isFixed) {
         toast({
             variant: "destructive",

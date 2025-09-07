@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import NextLink from 'next/link';
-import { PlusCircle, BookUser, LogOut, ArrowLeft } from 'lucide-react';
+import { PlusCircle, BookUser, LogOut, ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/use-auth";
@@ -15,7 +15,6 @@ import { Badge } from "@/components/ui/badge";
 import { format, parseISO } from "date-fns";
 import DebtForm from "@/components/pennywise/DebtForm";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
 
 export default function DebtPage() {
   const { logout, isAuthenticated, isLoading, userEmail } = useAuth();
@@ -36,13 +35,8 @@ export default function DebtPage() {
           console.error("Failed to parse debts from localStorage", e);
           setDebts([]);
         }
-      } else {
-        setDebts([]);
       }
       setIsLoaded(true);
-    } else if (!userEmail) {
-      setIsLoaded(false);
-      setDebts([]);
     }
   }, [userEmail, isLoaded, debtsKey]);
 
