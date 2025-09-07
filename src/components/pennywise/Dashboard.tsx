@@ -149,6 +149,7 @@ export default function Dashboard() {
     if (!userEmail) return;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
  const saveData = useCallback((
     newTransactions: Transaction[] | ((prev: Transaction[]) => Transaction[]),
     newCategories: Category[] | ((prev: Category[]) => Category[]),
@@ -188,6 +189,9 @@ export default function Dashboard() {
     
     let updatedCategories = categories;
 =======
+=======
+    setIsSyncing(true);
+>>>>>>> dc8a151 (error saat hapus Debt Repayment)
     const categoryExists = categories.some(c => c.name.toLowerCase() === transactionData.category.toLowerCase() && c.type === transactionData.type);
 >>>>>>> 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
     if (!categoryExists) {
@@ -234,6 +238,7 @@ export default function Dashboard() {
       }
 =======
     const result = await addTransactionAction(userEmail, transactionData);
+    setIsSyncing(false);
     if (result.success && result.transaction) {
         setTransactions(prev => [result.transaction!, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
         setTransactionFormOpen(false);
@@ -248,10 +253,14 @@ export default function Dashboard() {
   };
 
   const deleteTransaction = async (id: string) => {
+    if(!userEmail) return;
+
     const transactionToDelete = transactions.find(t => t.id === id);
     if (!transactionToDelete) return;
 
-    const result = await deleteTransactionAction(transactionToDelete, debts);
+    setIsSyncing(true);
+    const result = await deleteTransactionAction(userEmail, transactionToDelete, debts);
+    setIsSyncing(false);
     
     if (result.success) {
         setTransactions(prev => prev.filter(t => t.id !== id));
@@ -271,9 +280,11 @@ export default function Dashboard() {
   const addCategory = async (categoryData: Omit<Category, "id" | 'isFixed' | 'icon'>) => {
     if (!userEmail) return;
 
+    setIsSyncing(true);
     const existingCategory = categories.find(c => c.name.toLowerCase() === categoryData.name.toLowerCase() && c.type === categoryData.type);
     if (existingCategory) {
         toast({ variant: 'destructive', title: 'Category exists', description: `Category "${categoryData.name}" for ${categoryData.type} already exists.` });
+        setIsSyncing(false);
         return; 
     }
 <<<<<<< HEAD
@@ -282,6 +293,7 @@ export default function Dashboard() {
     saveData(transactions, updatedCategories, spendingLimit, debts);
 =======
     const result = await addCategoryAction(userEmail, categoryData);
+    setIsSyncing(false);
     if (result.success && result.category) {
         setCategories(prev => [...prev, result.category!]);
         toast({ title: 'Success!', description: `Category "${result.category.name}" has been added.` });
@@ -318,7 +330,9 @@ export default function Dashboard() {
     saveData(transactions, categories, newLimit, debts);
 =======
     
+    setIsSyncing(true);
     const result = await deleteCategoryAction(id);
+    setIsSyncing(false);
     if (result.success) {
         setCategories(prev => prev.filter(c => c.id !== id));
         toast({ title: 'Success!', description: `Category "${categoryToDelete.name}" has been deleted.` });
@@ -329,7 +343,9 @@ export default function Dashboard() {
 
   const handleSetSpendingLimit = async (newLimit: number) => {
     if (!userEmail) return;
+    setIsSyncing(true);
     const result = await setSpendingLimitAction(userEmail, newLimit);
+    setIsSyncing(false);
     if (result.success) {
         setSpendingLimit(newLimit);
     } else {

@@ -31,17 +31,6 @@ export async function generateMonthlyReportAction(
       })
       .join('\n');
 
-    const spendingByCategoryString = JSON.stringify(spendingByCategory, null, 2);
-
-    const result = await generateMonthlyReport({
-      income,
-      expenses,
-      spendingByCategory, // Schema expects object, not string
-      spendingLimit,
-      transactionHistory: transactionHistoryString,
-    });
-    // The prompt template can handle the object directly, no need to stringify for the call.
-    // The previous implementation was correct, the prompt stringifies it. I will revert this part but keep the rest of the fixes.
     const promptInput = {
         income,
         expenses,
@@ -51,7 +40,6 @@ export async function generateMonthlyReportAction(
     };
 
     const reportResult = await generateMonthlyReport(promptInput);
-
 
     return { success: true, report: reportResult.report };
   } catch (error) {
@@ -277,35 +265,43 @@ export async function addDebtAction(
         const updatedTransactions = [...transactions, newExpenseTransaction];
 =======
 export async function deleteTransactionAction(
+    userEmail: string,
     transactionToDelete: Transaction,
     allDebts: Debt[]
 ): Promise<{ success: boolean, error?: string, deletedDebtId?: string, updatedDebt?: Debt }> {
     try {
-        await deleteTransactionFromSheet(transactionToDelete.id);
-
+        // Find if the transaction is linked to any debt before deleting it.
         const relatedLendingDebt = allDebts.find(d => d.lendingTransactionId === transactionToDelete.id);
         if (relatedLendingDebt) {
+            // This is a "Lending" transaction. Delete the debt record along with it.
             await deleteDebtFromSheet(relatedLendingDebt.id);
+            await deleteTransactionFromSheet(transactionToDelete.id);
             return { success: true, deletedDebtId: relatedLendingDebt.id };
         }
 >>>>>>> 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
 
         const relatedRepaymentDebt = allDebts.find(d => d.repaymentTransactionId === transactionToDelete.id);
         if (relatedRepaymentDebt) {
+            // This is a "Debt Repayment" transaction. Revert the debt status to "unpaid".
             const updatedDebt: Debt = {
                 ...relatedRepaymentDebt,
                 status: 'unpaid',
                 repaymentTransactionId: undefined,
             };
-            const userEmail = "email-is-not-needed-for-update"; // This is a placeholder as email is not used in updateRow logic anymore
             await updateDebtInSheet(userEmail, updatedDebt);
+            await deleteTransactionFromSheet(transactionToDelete.id);
             return { success: true, updatedDebt };
         }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         return { success: true, debts: updatedDebts, transactions: updatedTransactions };
         
 =======
+=======
+        // If it's a regular transaction, just delete it.
+        await deleteTransactionFromSheet(transactionToDelete.id);
+>>>>>>> dc8a151 (error saat hapus Debt Repayment)
         return { success: true };
 >>>>>>> 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
     } catch (error) {
@@ -314,6 +310,7 @@ export async function deleteTransactionAction(
     }
 }
 
+<<<<<<< HEAD
 
 <<<<<<< HEAD
 export async function deleteTransactionAction(email: string, transactionId: string): Promise<{ success: boolean, error?: string, transactions?: Transaction[], debts?: Debt[] }> {
@@ -358,11 +355,15 @@ export async function deleteTransactionAction(email: string, transactionId: stri
 
     
 =======
+=======
+>>>>>>> dc8a151 (error saat hapus Debt Repayment)
 export async function deleteDebtAction(debtToDelete: Debt): Promise<{ success: boolean, error?: string }> {
     try {
+        // First, delete the associated "Lending" transaction from the sheet.
         if (debtToDelete.lendingTransactionId) {
             await deleteTransactionFromSheet(debtToDelete.lendingTransactionId);
         }
+        // Then, delete the debt record itself.
         await deleteDebtFromSheet(debtToDelete.id);
         return { success: true };
     } catch (error) {
