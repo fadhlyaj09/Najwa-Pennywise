@@ -42,10 +42,11 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
   }
 
   const getAmountFontSize = (amount: number) => {
-    const amountLength = Math.abs(amount).toString().length;
-    if (amountLength > 12) return 'text-sm md:text-base';
-    if (amountLength > 9) return 'text-base md:text-lg';
-    return 'text-lg md:text-xl';
+    const rupiahString = formatRupiah(amount);
+    const amountLength = rupiahString.length; // Menggunakan panjang string Rupiah
+    if (amountLength > 15) return 'text-base'; // Ukuran lebih kecil untuk angka sangat besar
+    if (amountLength > 12) return 'text-lg'; // Ukuran medium
+    return 'text-xl'; // Ukuran default
   }
 
   return (
