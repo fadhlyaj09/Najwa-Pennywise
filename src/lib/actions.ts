@@ -359,10 +359,16 @@ export async function deleteTransactionAction(email: string, transactionId: stri
 >>>>>>> dc8a151 (error saat hapus Debt Repayment)
 export async function deleteDebtAction(debtToDelete: Debt): Promise<{ success: boolean, error?: string }> {
     try {
-        // First, delete the associated "Lending" transaction from the sheet.
+        // First, delete the associated "Lending" expense transaction.
         if (debtToDelete.lendingTransactionId) {
             await deleteTransactionFromSheet(debtToDelete.lendingTransactionId);
         }
+        
+        // If the debt was paid, also delete the "Debt Repayment" income transaction.
+        if (debtToDelete.status === 'paid' && debtToDelete.repaymentTransactionId) {
+            await deleteTransactionFromSheet(debtToDelete.repaymentTransactionId);
+        }
+
         // Then, delete the debt record itself.
         await deleteDebtFromSheet(debtToDelete.id);
         return { success: true };

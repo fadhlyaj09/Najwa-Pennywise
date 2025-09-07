@@ -128,7 +128,7 @@ export default function DebtPage() {
         setDebts(prev => prev.filter(d => d.id !== debt.id));
         toast({
             title: "Debt Deleted",
-            description: "The debt record and its related expense have been removed."
+            description: "The debt record and its related transactions have been removed."
         });
     } else {
         toast({
@@ -285,13 +285,36 @@ export default function DebtPage() {
                                 <p className="text-center text-muted-foreground py-10">No paid debts.</p>
                             ) : (
                                 paidDebts.map(debt => (
-                                    <div key={debt.id} className="p-4 border rounded-lg flex justify-between items-center opacity-60">
+                                    <div key={debt.id} className="p-4 border rounded-lg flex justify-between items-center opacity-70">
                                         <div>
                                             <p className="font-semibold">{debt.debtorName}</p>
                                             <p className="text-xl font-bold">{formatRupiah(debt.amount)}</p>
                                             <p className="text-sm text-muted-foreground">{debt.description}</p>
                                         </div>
-                                        <Badge variant="secondary">Paid</Badge>
+                                        <div className="flex items-center gap-1">
+                                            <Badge variant="secondary">Paid</Badge>
+                                             <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-destructive" disabled={isSyncing}>
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This will permanently delete the debt record for "{debt.debtorName}" and both of its associated transactions (Lending and Debt Repayment). This action cannot be undone.
+                                                    </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => deleteDebt(debt)} disabled={isSyncing}>
+                                                        Continue
+                                                    </AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        </div>
                                     </div>
                                 ))
                             )}
