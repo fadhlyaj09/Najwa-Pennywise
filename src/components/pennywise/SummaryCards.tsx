@@ -41,6 +41,13 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
   }
 
+  const getAmountFontSize = (amount: number) => {
+    const amountLength = Math.abs(amount).toString().length;
+    if (amountLength > 12) return 'text-sm md:text-base';
+    if (amountLength > 9) return 'text-base md:text-lg';
+    return 'text-lg md:text-xl';
+  }
+
   return (
     <div className="grid grid-cols-2 gap-4">
       <Card>
@@ -49,7 +56,7 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
           <ArrowUpCircle className="h-4 w-4 text-green-500" />
         </CardHeader>
         <CardContent className="p-4 pt-0">
-          <div className="text-base md:text-lg font-bold break-words">{formatRupiah(income)}</div>
+          <div className={`${getAmountFontSize(income)} font-bold break-words`}>{formatRupiah(income)}</div>
         </CardContent>
       </Card>
       <Card>
@@ -58,7 +65,7 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
           <ArrowDownCircle className="h-4 w-4 text-red-500" />
         </CardHeader>
         <CardContent className="p-4 pt-0">
-          <div className="text-base md:text-lg font-bold break-words">{formatRupiah(expenses)}</div>
+          <div className={`${getAmountFontSize(expenses)} font-bold break-words`}>{formatRupiah(expenses)}</div>
         </CardContent>
       </Card>
       <Card className="col-span-2">
@@ -67,7 +74,7 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
           <Wallet className="h-4 w-4 text-blue-500" />
         </CardHeader>
         <CardContent className="p-4 pt-0">
-          <div className={`text-base md:text-lg font-bold break-words ${balance >= 0 ? 'text-foreground' : 'text-destructive'}`}>
+          <div className={`${getAmountFontSize(balance)} font-bold break-words ${balance >= 0 ? 'text-foreground' : 'text-destructive'}`}>
             {formatRupiah(balance)}
           </div>
         </CardContent>
