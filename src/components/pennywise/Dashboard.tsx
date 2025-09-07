@@ -35,7 +35,7 @@ const najwaCompliments = [
     "Tercatat! Najwa, caramu mengatur keuangan sangat menginspirasi.",
     "Bagus sekali, Najwa! Teruslah menjadi manajer keuangan yang andal.",
     "Hebat, Najwa! Selangkah lebih dekat menuju kebebasan finansial.",
-    "Najwa cantik",
+    "Transaksi dicatat, secantik Najwa!",
 ];
 
 export default function Dashboard() {
