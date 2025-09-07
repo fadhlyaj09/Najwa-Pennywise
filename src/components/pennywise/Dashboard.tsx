@@ -4,11 +4,11 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import NextLink from 'next/link';
 import { useRouter } from "next/navigation";
-<<<<<<< HEAD
+HEAD
 import { PlusCircle, Tags, LogOut, BookUser, MoreVertical, Loader2, Cloud, CloudOff, Repeat } from "lucide-react";
 =======
 import { PlusCircle, Tags, LogOut, BookUser, MoreVertical, Loader2, Cloud, CloudOff } from "lucide-react";
->>>>>>> 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
+5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
 import type { Transaction, Category, Debt } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import SummaryCards from "@/components/pennywise/SummaryCards";
@@ -22,11 +22,11 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { useAuth } from "@/hooks/use-auth";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-<<<<<<< HEAD
+HEAD
 import { getUserData, saveUserData, deleteTransactionAction } from "@/lib/actions";
 import { useDebouncedCallback } from "use-debounce";
 
-=======
+
 import {
     getUserData,
     addTransactionAction,
@@ -35,7 +35,7 @@ import {
     deleteCategoryAction,
     setSpendingLimitAction,
 } from "@/lib/actions";
->>>>>>> 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
+5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
 
 const fixedCategoriesData: Omit<Category, 'id'>[] = [
     { name: 'Salary', icon: 'Landmark', type: 'income', isFixed: true },
@@ -73,7 +73,7 @@ export default function Dashboard() {
 
   const { toast } = useToast();
 
-<<<<<<< HEAD
+HEAD
   const debouncedSave = useDebouncedCallback(async (email: string, trans: Transaction[], cats: Category[], limit: number, debtList: Debt[]) => {
     setIsSyncing(true);
     const result = await saveUserData(email, trans, cats, limit, debtList);
@@ -89,8 +89,8 @@ export default function Dashboard() {
   }, 2000);
 
 
-=======
->>>>>>> 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
+
+5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
   useEffect(() => {
     if (!userEmail) {
         setIsLoading(false);
@@ -109,7 +109,7 @@ export default function Dashboard() {
             setDebts(result.data.debts || []);
             
             const userCategories = result.data.categories || [];
-<<<<<<< HEAD
+HEAD
             
             const existingCategoryNames = new Set(userCategories.map(c => `${c.name.toLowerCase()}|${c.type}`));
             const missingFixedCategories = fixedCategoriesData.filter(
@@ -118,7 +118,7 @@ export default function Dashboard() {
       
             const finalCategories = [...userCategories, ...missingFixedCategories.map(c => ({...c, id: crypto.randomUUID()}))];
             setCategories(finalCategories);
-=======
+
             const newCategories = [...userCategories];
             
             fixedCategoriesData.forEach(fixedCat => {
@@ -130,7 +130,7 @@ export default function Dashboard() {
                 }
             });
             setCategories(newCategories);
->>>>>>> 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
+5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
 
         } else {
             setError(result.error || 'Failed to load data.');
@@ -148,8 +148,8 @@ export default function Dashboard() {
   const addTransaction = async (transactionData: Omit<Transaction, "id">) => {
     if (!userEmail) return;
 
-<<<<<<< HEAD
-<<<<<<< HEAD
+HEAD
+HEAD
  const saveData = useCallback((
     newTransactions: Transaction[] | ((prev: Transaction[]) => Transaction[]),
     newCategories: Category[] | ((prev: Category[]) => Category[]),
@@ -188,12 +188,12 @@ export default function Dashboard() {
     const categoryExists = categories.some(c => c.name.toLowerCase() === transaction.category.toLowerCase() && c.type === transaction.type);
     
     let updatedCategories = categories;
-=======
-=======
+
+
     setIsSyncing(true);
->>>>>>> dc8a151 (error saat hapus Debt Repayment)
+dc8a151 (error saat hapus Debt Repayment)
     const categoryExists = categories.some(c => c.name.toLowerCase() === transactionData.category.toLowerCase() && c.type === transactionData.type);
->>>>>>> 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
+5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
     if (!categoryExists) {
         const catResult = await addCategoryAction(userEmail, { name: transactionData.category, type: transactionData.type });
         if (catResult.success && catResult.category) {
@@ -201,7 +201,7 @@ export default function Dashboard() {
         }
     }
 
-<<<<<<< HEAD
+HEAD
     const newTransaction = { ...transaction, id: crypto.randomUUID() };
     const updatedTransactions = [newTransaction, ...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     
@@ -236,7 +236,7 @@ export default function Dashboard() {
               description: result.error || "Could not delete the transaction."
           });
       }
-=======
+
     const result = await addTransactionAction(userEmail, transactionData);
     setIsSyncing(false);
     if (result.success && result.transaction) {
@@ -274,7 +274,7 @@ export default function Dashboard() {
     } else {
         toast({ variant: 'destructive', title: 'Error', description: result.error });
     }
->>>>>>> 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
+5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
   };
 
   const addCategory = async (categoryData: Omit<Category, "id" | 'isFixed' | 'icon'>) => {
@@ -287,11 +287,11 @@ export default function Dashboard() {
         setIsSyncing(false);
         return; 
     }
-<<<<<<< HEAD
+HEAD
     const newCategory: Category = { ...category, id: crypto.randomUUID(), icon: 'Tag', isFixed: false };
     const updatedCategories = [...categories, newCategory];
     saveData(transactions, updatedCategories, spendingLimit, debts);
-=======
+
     const result = await addCategoryAction(userEmail, categoryData);
     setIsSyncing(false);
     if (result.success && result.category) {
@@ -300,7 +300,7 @@ export default function Dashboard() {
     } else {
         toast({ variant: 'destructive', title: 'Error', description: result.error });
     }
->>>>>>> 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
+5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
   };
 
   const deleteCategory = async (id: string) => {
@@ -317,7 +317,7 @@ export default function Dashboard() {
         toast({ variant: "destructive", title: "Cannot Delete Category", description: `"${categoryToDelete.name}" is in use by one or more transactions.` });
         return;
     }
-<<<<<<< HEAD
+HEAD
     const updatedCategories = categories.filter(c => c.id !== id);
     saveData(transactions, updatedCategories, spendingLimit, debts);
     toast({
@@ -328,7 +328,7 @@ export default function Dashboard() {
 
   const handleSetSpendingLimit = (newLimit: number) => {
     saveData(transactions, categories, newLimit, debts);
-=======
+
     
     setIsSyncing(true);
     const result = await deleteCategoryAction(id);
@@ -351,7 +351,7 @@ export default function Dashboard() {
     } else {
         toast({ variant: 'destructive', title: 'Error', description: result.error });
     }
->>>>>>> 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
+5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
   };
 
   const { income, expenses, balance } = useMemo(() => {
@@ -504,9 +504,8 @@ export default function Dashboard() {
     </div>
   );
 }
-<<<<<<< HEAD
+HEAD
 
 
     
-=======
->>>>>>> 5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
+git commit -m "Memperbaiki sisa konflik merge"5aec298 (Try fixing this error: `Console Error: Encountered two children with the)
