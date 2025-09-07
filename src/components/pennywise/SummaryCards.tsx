@@ -42,12 +42,13 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
   }
 
   const getAmountFontSize = (amount: number) => {
-    const rupiahString = formatRupiah(amount);
-    const amountLength = rupiahString.length; // Menggunakan panjang string Rupiah
-    if (amountLength > 15) return 'text-base'; // Ukuran lebih kecil untuk angka sangat besar
-    if (amountLength > 12) return 'text-lg'; // Ukuran medium
-    return 'text-xl'; // Ukuran default
+    const amountLength = amount.toString().length;
+    if (amountLength > 12) return 'text-sm';
+    if (amountLength > 9) return 'text-base';
+    if (amountLength > 6) return 'text-lg';
+    return 'text-xl';
   }
+
 
   return (
     <div className="grid grid-cols-2 gap-4">
@@ -57,7 +58,7 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
           <ArrowUpCircle className="h-4 w-4 text-green-500" />
         </CardHeader>
         <CardContent className="p-4 pt-0">
-          <div className={`${getAmountFontSize(income)} font-bold break-words`}>{formatRupiah(income)}</div>
+          <div className={`${getAmountFontSize(income)} font-bold break-keep`}>{formatRupiah(income)}</div>
         </CardContent>
       </Card>
       <Card>
@@ -66,7 +67,7 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
           <ArrowDownCircle className="h-4 w-4 text-red-500" />
         </CardHeader>
         <CardContent className="p-4 pt-0">
-          <div className={`${getAmountFontSize(expenses)} font-bold break-words`}>{formatRupiah(expenses)}</div>
+          <div className={`${getAmountFontSize(expenses)} font-bold break-keep`}>{formatRupiah(expenses)}</div>
         </CardContent>
       </Card>
       <Card className="col-span-2">
@@ -75,7 +76,7 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
           <Wallet className="h-4 w-4 text-blue-500" />
         </CardHeader>
         <CardContent className="p-4 pt-0">
-          <div className={`${getAmountFontSize(balance)} font-bold break-words ${balance >= 0 ? 'text-foreground' : 'text-destructive'}`}>
+          <div className={`${getAmountFontSize(balance)} font-bold break-keep ${balance >= 0 ? 'text-foreground' : 'text-destructive'}`}>
             {formatRupiah(balance)}
           </div>
         </CardContent>
