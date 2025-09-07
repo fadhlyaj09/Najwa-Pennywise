@@ -125,11 +125,12 @@ export async function addDebtAction(
         const { transactions, categories, spendingLimit, debts } = await getUserDataFromSheet(email);
         
         const lendingTransactionId = crypto.randomUUID();
+        const debtId = crypto.randomUUID();
 
         // 1. Create the new debt record
         const newDebt: Debt = {
             ...debtData,
-            id: crypto.randomUUID(),
+            id: debtId,
             status: 'unpaid',
             lendingTransactionId: lendingTransactionId,
         };
