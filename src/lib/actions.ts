@@ -55,12 +55,11 @@ export async function saveUserData(
     email: string,
     transactions: Transaction[],
     categories: Category[],
-    limit: number
+    limit: number,
+    debts: Debt[]
 ) {
     try {
-        // Since debts are managed separately, fetch them first to avoid overwriting them
-        const { debts } = await getUserDataFromSheet(email);
-        await writeUserDataToSheet(email, transactions, categories, limit, debts || []);
+        await writeUserDataToSheet(email, transactions, categories, limit, debts);
         return { success: true };
     } catch (error) {
         console.error("Error saving user data to sheet:", error);
@@ -80,7 +79,7 @@ export async function getDebts(email: string): Promise<{ success: boolean, data?
   }
 }
 
-export async function settleDebtAction(email: string, debtId: string): Promise<{ success: boolean, error?: string, debts?: Debt[] }> {
+export async function settleDebtAction(email: string, debtId: string): Promise<{ success: boolean, error?: string, debts?: Debt[], transactions?: Transaction[] }> {
     try {
         const { transactions, categories, spendingLimit, debts } = await getUserDataFromSheet(email);
 
@@ -88,10 +87,12 @@ export async function settleDebtAction(email: string, debtId: string): Promise<{
         if (!debtToSettle || debtToSettle.status === 'paid') {
             return { success: false, error: "Debt not found or already paid." };
         }
+        
+        const repaymentTransactionId = crypto.randomUUID();
 
         // 1. Create a new income transaction
         const newTransaction: Transaction = {
-            id: crypto.randomUUID(),
+            id: repaymentTransactionId,
             type: 'income',
             category: 'Debt Repayment',
             amount: debtToSettle.amount,
@@ -99,15 +100,15 @@ export async function settleDebtAction(email: string, debtId: string): Promise<{
         };
         const updatedTransactions = [...transactions, newTransaction];
 
-        // 2. Update the debt status
+        // 2. Update the debt status and link transaction
         const updatedDebts = debts.map(d => 
-            d.id === debtId ? { ...d, status: 'paid' as const } : d
+            d.id === debtId ? { ...d, status: 'paid' as const, repaymentTransactionId: repaymentTransactionId } : d
         );
 
         // 3. Save everything back to the sheet
         await writeUserDataToSheet(email, updatedTransactions, categories, spendingLimit, updatedDebts);
 
-        return { success: true, debts: updatedDebts };
+        return { success: true, debts: updatedDebts, transactions: updatedTransactions };
 
     } catch (error) {
         console.error("Error settling debt:", error);
@@ -119,33 +120,35 @@ export async function settleDebtAction(email: string, debtId: string): Promise<{
 export async function addDebtAction(
     email: string, 
     debtData: Omit<Debt, 'id' | 'status'>
-): Promise<{ success: boolean, error?: string, debts?: Debt[] }> {
+): Promise<{ success: boolean, error?: string, debts?: Debt[], transactions?: Transaction[] }> {
     try {
         const { transactions, categories, spendingLimit, debts } = await getUserDataFromSheet(email);
         
+        const lendingTransactionId = crypto.randomUUID();
+
         // 1. Create the new debt record
         const newDebt: Debt = {
             ...debtData,
             id: crypto.randomUUID(),
             status: 'unpaid',
-            icon: 'Users', // Default icon for a debt record
+            lendingTransactionId: lendingTransactionId,
         };
         const updatedDebts = [...debts, newDebt];
 
         // 2. Create a corresponding expense transaction
         const newExpenseTransaction: Transaction = {
-            id: crypto.randomUUID(),
+            id: lendingTransactionId,
             type: 'expense',
-            category: 'Lending', // New fixed category
+            category: 'Lending',
             amount: debtData.amount,
-            date: format(new Date(), "yyyy-MM-dd"), // Use today's date for the expense
+            date: format(new Date(), "yyyy-MM-dd"),
         };
         const updatedTransactions = [...transactions, newExpenseTransaction];
 
         // 3. Save everything back to the sheet
         await writeUserDataToSheet(email, updatedTransactions, categories, spendingLimit, updatedDebts);
 
-        return { success: true, debts: updatedDebts };
+        return { success: true, debts: updatedDebts, transactions: updatedTransactions };
         
     } catch (error) {
         console.error("Error adding debt:", error);
@@ -153,3 +156,46 @@ export async function addDebtAction(
         return { success: false, error: `Add Debt Error: ${errorMessage}` };
     }
 }
+
+
+export async function deleteTransactionAction(email: string, transactionId: string): Promise<{ success: boolean, error?: string, transactions?: Transaction[], debts?: Debt[] }> {
+    try {
+        const { transactions, categories, spendingLimit, debts } = await getUserDataFromSheet(email);
+
+        const transactionToDelete = transactions.find(t => t.id === transactionId);
+        if (!transactionToDelete) {
+            return { success: false, error: "Transaction not found." };
+        }
+
+        let updatedDebts = [...debts];
+        
+        // Check if this transaction is linked to any debt
+        const linkedDebtAsLending = debts.find(d => d.lendingTransactionId === transactionId);
+        const linkedDebtAsRepayment = debts.find(d => d.repaymentTransactionId === transactionId);
+
+        if (linkedDebtAsLending) {
+            // If the lending transaction is deleted, the whole debt record should be deleted
+            updatedDebts = debts.filter(d => d.id !== linkedDebtAsLending.id);
+        } else if (linkedDebtAsRepayment) {
+            // If the repayment transaction is deleted, revert the debt status to 'unpaid'
+            updatedDebts = debts.map(d => 
+                d.id === linkedDebtAsRepayment.id 
+                ? { ...d, status: 'unpaid' as const, repaymentTransactionId: undefined } 
+                : d
+            );
+        }
+
+        const updatedTransactions = transactions.filter(t => t.id !== transactionId);
+
+        await writeUserDataToSheet(email, updatedTransactions, categories, spendingLimit, updatedDebts);
+        
+        return { success: true, transactions: updatedTransactions, debts: updatedDebts };
+        
+    } catch (error) {
+        console.error("Error deleting transaction:", error);
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        return { success: false, error: `Delete Transaction Error: ${errorMessage}` };
+    }
+}
+
+    

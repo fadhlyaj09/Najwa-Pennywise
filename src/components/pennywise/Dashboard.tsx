@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import NextLink from 'next/link';
 import { useRouter } from "next/navigation";
 import { PlusCircle, Tags, LogOut, BookUser, MoreVertical, Loader2, Cloud, CloudOff, Repeat } from "lucide-react";
-import type { Transaction, Category } from "@/lib/types";
+import type { Transaction, Category, Debt } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import SummaryCards from "@/components/pennywise/SummaryCards";
 import TransactionHistory from "@/components/pennywise/TransactionHistory";
@@ -18,7 +18,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { useAuth } from "@/hooks/use-auth";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-import { getUserData, saveUserData } from "@/lib/actions";
+import { getUserData, saveUserData, deleteTransactionAction } from "@/lib/actions";
 import { useDebouncedCallback } from "use-debounce";
 
 
@@ -48,6 +48,7 @@ export default function Dashboard() {
   const router = useRouter();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [debts, setDebts] = useState<Debt[]>([]);
   const [spendingLimit, setSpendingLimit] = useState<number>(5000000);
   
   const [isLoading, setIsLoading] = useState(true);
@@ -56,9 +57,9 @@ export default function Dashboard() {
 
   const { toast } = useToast();
 
-  const debouncedSave = useDebouncedCallback(async (email: string, trans: Transaction[], cats: Category[], limit: number) => {
+  const debouncedSave = useDebouncedCallback(async (email: string, trans: Transaction[], cats: Category[], limit: number, debtList: Debt[]) => {
     setIsSyncing(true);
-    const result = await saveUserData(email, trans, cats, limit);
+    const result = await saveUserData(email, trans, cats, limit, debtList);
     if (!result.success) {
       toast({
         variant: "destructive",
@@ -86,10 +87,13 @@ export default function Dashboard() {
         if (result.success && result.data) {
             setTransactions(result.data.transactions || []);
             setSpendingLimit(result.data.spendingLimit || 5000000);
+            setDebts(result.data.debts || []);
             
             const userCategories = result.data.categories || [];
+            
+            const existingCategoryNames = new Set(userCategories.map(c => `${c.name.toLowerCase()}|${c.type}`));
             const missingFixedCategories = fixedCategoriesData.filter(
-                fc => !userCategories.some(uc => uc.name === fc.name && uc.type === fc.type)
+                fc => !existingCategoryNames.has(`${fc.name.toLowerCase()}|${fc.type}`)
             );
       
             const finalCategories = [...userCategories, ...missingFixedCategories.map(c => ({...c, id: crypto.randomUUID()}))];
@@ -112,13 +116,15 @@ export default function Dashboard() {
   const saveData = useCallback((
     newTransactions: Transaction[],
     newCategories: Category[],
-    newLimit: number
+    newLimit: number,
+    newDebts: Debt[],
   ) => {
       if (!userEmail) return;
       setTransactions(newTransactions);
       setCategories(newCategories);
       setSpendingLimit(newLimit);
-      debouncedSave(userEmail, newTransactions, newCategories, newLimit);
+      setDebts(newDebts);
+      debouncedSave(userEmail, newTransactions, newCategories, newLimit, newDebts);
   }, [userEmail, debouncedSave]);
   
 
@@ -134,7 +140,7 @@ export default function Dashboard() {
     const newTransaction = { ...transaction, id: crypto.randomUUID() };
     const updatedTransactions = [newTransaction, ...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     
-    saveData(updatedTransactions, updatedCategories, spendingLimit);
+    saveData(updatedTransactions, updatedCategories, spendingLimit, debts);
     setTransactionFormOpen(false);
     
     const randomMessage = najwaCompliments[Math.floor(Math.random() * najwaCompliments.length)];
@@ -144,13 +150,27 @@ export default function Dashboard() {
     });
   };
 
-  const deleteTransaction = (id: string) => {
-    const updatedTransactions = transactions.filter(t => t.id !== id);
-    saveData(updatedTransactions, categories, spendingLimit);
-    toast({
-        title: "Transaction Deleted",
-        description: "The transaction has been successfully removed."
-    });
+  const deleteTransaction = async (transactionId: string) => {
+      if (!userEmail) return;
+
+      setIsSyncing(true);
+      const result = await deleteTransactionAction(userEmail, transactionId);
+      setIsSyncing(false);
+
+      if (result.success) {
+          setTransactions(result.transactions || []);
+          setDebts(result.debts || []);
+          toast({
+              title: "Transaction Deleted",
+              description: "The transaction and any linked debt record have been updated."
+          });
+      } else {
+          toast({
+              variant: "destructive",
+              title: "Error",
+              description: result.error || "Could not delete the transaction."
+          });
+      }
   };
   
   const addCategory = (category: Omit<Category, "id" | 'isFixed' | 'icon'>) => {
@@ -165,7 +185,7 @@ export default function Dashboard() {
     }
     const newCategory: Category = { ...category, id: crypto.randomUUID(), icon: 'Tag', isFixed: false };
     const updatedCategories = [...categories, newCategory];
-    saveData(transactions, updatedCategories, spendingLimit);
+    saveData(transactions, updatedCategories, spendingLimit, debts);
   };
   
   const deleteCategory = (id: string) => {
@@ -192,7 +212,7 @@ export default function Dashboard() {
         return;
     }
     const updatedCategories = categories.filter(c => c.id !== id);
-    saveData(transactions, updatedCategories, spendingLimit);
+    saveData(transactions, updatedCategories, spendingLimit, debts);
     toast({
       title: 'Success!',
       description: `Category "${categoryToDelete.name}" has been deleted.`
@@ -200,7 +220,7 @@ export default function Dashboard() {
   };
 
   const handleSetSpendingLimit = (newLimit: number) => {
-    saveData(transactions, categories, newLimit);
+    saveData(transactions, categories, newLimit, debts);
   };
   
   const { income, expenses, balance } = useMemo(() => {
@@ -250,8 +270,8 @@ export default function Dashboard() {
           <div className="flex items-center gap-2">
             
             <div className="flex items-center gap-2 text-xs text-muted-foreground mr-2">
-              {isSyncing ? <Loader2 className="h-4 w-4 animate-spin" /> : (error ? <CloudOff className="h-4 w-4 text-destructive" /> : <Cloud className="h-4 w-4 text-green-500" />) }
-              <span className="hidden md:inline">{isSyncing ? "Syncing..." : (error ? "Sync Failed" : "Synced")}</span>
+              {isSyncing || isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : (error ? <CloudOff className="h-4 w-4 text-destructive" /> : <Cloud className="h-4 w-4 text-green-500" />) }
+              <span className="hidden md:inline">{isSyncing || isLoading ? "Syncing..." : (error ? "Sync Failed" : "Synced")}</span>
             </div>
 
             <Dialog open={transactionFormOpen} onOpenChange={setTransactionFormOpen}>
