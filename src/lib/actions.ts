@@ -299,6 +299,7 @@ export async function deleteTransactionAction(
 }
 
 
+<<<<<<< HEAD
 export async function deleteTransactionAction(email: string, transactionId: string): Promise<{ success: boolean, error?: string, transactions?: Transaction[], debts?: Debt[] }> {
     try {
         const { transactions, categories, spendingLimit, debts } = await getUserDataFromSheet(email);
@@ -340,3 +341,18 @@ export async function deleteTransactionAction(email: string, transactionId: stri
 }
 
     
+=======
+export async function deleteDebtAction(debtToDelete: Debt): Promise<{ success: boolean, error?: string }> {
+    try {
+        if (debtToDelete.lendingTransactionId) {
+            await deleteTransactionFromSheet(debtToDelete.lendingTransactionId);
+        }
+        await deleteDebtFromSheet(debtToDelete.id);
+        return { success: true };
+    } catch (error) {
+        console.error("Error deleting debt:", error);
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        return { success: false, error: `Delete Debt Error: ${errorMessage}` };
+    }
+}
+>>>>>>> faea11d (kalo semisal kita salah input data debt, apakah kita menghapus history d)

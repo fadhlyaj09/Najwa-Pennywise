@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import NextLink from 'next/link';
-import { PlusCircle, LogOut, ArrowLeft, Loader2, Cloud, CloudOff } from 'lucide-react';
+import { PlusCircle, LogOut, ArrowLeft, Loader2, Cloud, CloudOff, Trash2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/use-auth";
@@ -16,7 +16,18 @@ import { format, parseISO } from "date-fns";
 import DebtForm from "@/components/pennywise/DebtForm";
 import { useToast } from "@/hooks/use-toast";
 import { formatRupiah } from "@/lib/utils";
-import { getDebts, settleDebtAction, addDebtAction } from "@/lib/actions";
+import { getDebts, settleDebtAction, addDebtAction, deleteDebtAction } from "@/lib/actions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 export default function DebtPage() {
   const { logout, isAuthenticated, isAuthLoading, userEmail } = useAuth();
@@ -106,6 +117,27 @@ export default function DebtPage() {
         });
     }
   };
+  
+  const deleteDebt = async (debt: Debt) => {
+    if(!userEmail) return;
+    setIsSyncing(true);
+    const result = await deleteDebtAction(debt);
+    setIsSyncing(false);
+
+    if(result.success) {
+        setDebts(prev => prev.filter(d => d.id !== debt.id));
+        toast({
+            title: "Debt Deleted",
+            description: "The debt record and its related expense have been removed."
+        });
+    } else {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: result.error || "Could not delete the debt record."
+        });
+    }
+  }
 
   const { unpaidDebts, paidDebts, totalUnpaid } = useMemo(() => {
     const unpaid = debts.filter(d => d.status === 'unpaid');
@@ -209,10 +241,33 @@ export default function DebtPage() {
                                             <p className="text-sm text-muted-foreground">{debt.description}</p>
                                             <p className="text-xs text-muted-foreground mt-1">Due date: {format(parseISO(debt.dueDate), "d MMMM yyyy")}</p>
                                         </div>
-                                        <Button size="sm" onClick={() => markAsPaid(debt)} disabled={isSyncing}>
-                                            {isSyncing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                            Mark as Paid
-                                        </Button>
+                                        <div className="flex items-center gap-1">
+                                            <Button size="sm" onClick={() => markAsPaid(debt)} disabled={isSyncing}>
+                                                {isSyncing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                                Mark as Paid
+                                            </Button>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-destructive" disabled={isSyncing}>
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This will permanently delete the debt record for "{debt.debtorName}" and the associated "Lending" expense transaction. This action cannot be undone.
+                                                    </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => deleteDebt(debt)}>
+                                                        Continue
+                                                    </AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        </div>
                                     </div>
                                 ))
                             )}
