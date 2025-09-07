@@ -53,7 +53,7 @@ export default function DebtForm({ onAddDebt }: DebtFormProps) {
           name="debtorName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Nama Peminjam</FormLabel>
+              <FormLabel>Debtor's Name</FormLabel>
               <FormControl>
                 <Input placeholder="John Doe" {...field} />
               </FormControl>
@@ -66,7 +66,7 @@ export default function DebtForm({ onAddDebt }: DebtFormProps) {
           name="amount"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Jumlah</FormLabel>
+              <FormLabel>Amount</FormLabel>
               <FormControl>
                 <div className="relative">
                   <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">Rp</span>
@@ -82,9 +82,9 @@ export default function DebtForm({ onAddDebt }: DebtFormProps) {
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Deskripsi</FormLabel>
+              <FormLabel>Description</FormLabel>
               <FormControl>
-                <Textarea placeholder="e.g., Uang untuk makan siang" {...field} />
+                <Textarea placeholder="e.g., Money for lunch" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -95,7 +95,7 @@ export default function DebtForm({ onAddDebt }: DebtFormProps) {
           name="dueDate"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Tanggal Jatuh Tempo</FormLabel>
+              <FormLabel>Due Date</FormLabel>
               <FormControl>
                 <Input type="date" {...field} />
               </FormControl>
@@ -103,7 +103,7 @@ export default function DebtForm({ onAddDebt }: DebtFormProps) {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full">Tambah Catatan</Button>
+        <Button type="submit" className="w-full">Add Record</Button>
       </form>
     </Form>
   );

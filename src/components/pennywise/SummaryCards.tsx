@@ -7,6 +7,7 @@ import { ArrowUpCircle, ArrowDownCircle, Wallet, Edit, Check, Target } from 'luc
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { formatRupiah } from "@/lib/utils";
 
 interface SummaryCardsProps {
   income: number;
@@ -37,52 +38,48 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
     setNewLimit(e.target.value);
   };
 
-  const formatRupiah = (amount: number) => {
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
-  }
-
   const getAmountFontSize = (amount: number) => {
-    const amountLength = amount.toString().length;
-    if (amountLength > 12) return 'text-sm';
-    if (amountLength > 9) return 'text-base';
-    if (amountLength > 6) return 'text-lg';
-    return 'text-xl';
+    const amountLength = Math.abs(amount).toString().length;
+    if (amountLength > 9) return 'text-lg'; // e.g. 1,000,000,000
+    if (amountLength > 6) return 'text-xl'; // e.g. 1,000,000
+    return 'text-2xl';
   }
 
 
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total Income</CardTitle>
           <ArrowUpCircle className="h-4 w-4 text-green-500" />
         </CardHeader>
-        <CardContent className="p-4 pt-0">
-          <div className={`${getAmountFontSize(income)} font-bold break-keep`}>{formatRupiah(income)}</div>
+        <CardContent>
+          <div className={`${getAmountFontSize(income)} font-bold`}>{formatRupiah(income, {short: true})}</div>
+          <p className="text-xs text-muted-foreground">{formatRupiah(income)}</p>
         </CardContent>
       </Card>
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
           <ArrowDownCircle className="h-4 w-4 text-red-500" />
         </CardHeader>
-        <CardContent className="p-4 pt-0">
-          <div className={`${getAmountFontSize(expenses)} font-bold break-keep`}>{formatRupiah(expenses)}</div>
+        <CardContent>
+          <div className={`${getAmountFontSize(expenses)} font-bold`}>{formatRupiah(expenses, {short: true})}</div>
+           <p className="text-xs text-muted-foreground">{formatRupiah(expenses)}</p>
         </CardContent>
       </Card>
-      <Card className="col-span-2">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Balance</CardTitle>
           <Wallet className="h-4 w-4 text-blue-500" />
         </CardHeader>
-        <CardContent className="p-4 pt-0">
-          <div className={`${getAmountFontSize(balance)} font-bold break-keep ${balance >= 0 ? 'text-foreground' : 'text-destructive'}`}>
-            {formatRupiah(balance)}
-          </div>
+        <CardContent>
+          <div className={`${getAmountFontSize(balance)} font-bold ${balance < 0 ? 'text-destructive' : ''}`}>{formatRupiah(balance, {short: true})}</div>
+           <p className="text-xs text-muted-foreground">{formatRupiah(balance)}</p>
         </CardContent>
       </Card>
-      <Card className="col-span-2">
-        <CardHeader className="pb-2 p-4">
+      <Card className="md:col-span-3">
+        <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
                 <Target className="h-4 w-4 text-muted-foreground"/>
@@ -115,12 +112,12 @@ const SummaryCards = ({ income, expenses, balance, spendingLimit, onSetSpendingL
             <div className="text-base font-bold">{formatRupiah(spendingLimit)}</div>
           )}
         </CardHeader>
-        <CardContent className="space-y-1 p-4 pt-0">
+        <CardContent className="space-y-1">
             <Progress value={spendingProgress} className={limitExceeded ? "[&>div]:bg-destructive" : ""} />
             <p className={`text-xs ${limitExceeded ? 'text-destructive' : 'text-muted-foreground'}`}>
                 {limitExceeded
-                ? `Limit terlampaui ${formatRupiah(expenses - spendingLimit)}`
-                : `${formatRupiah(spendingLimit - expenses)} tersisa`}
+                ? `Limit exceeded by ${formatRupiah(expenses - spendingLimit)}`
+                : `${formatRupiah(spendingLimit - expenses)} remaining`}
             </p>
         </CardContent>
       </Card>

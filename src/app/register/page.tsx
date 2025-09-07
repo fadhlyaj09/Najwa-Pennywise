@@ -27,12 +27,12 @@ export default function RegisterPage() {
     setError('');
 
     if (password !== confirmPassword) {
-      setError('Kata sandi tidak cocok.');
+      setError('Passwords do not match.');
       return;
     }
 
     if(password.length < 6) {
-      setError('Kata sandi harus terdiri dari minimal 6 karakter.');
+      setError('Password must be at least 6 characters long.');
       return;
     }
 
@@ -42,18 +42,18 @@ export default function RegisterPage() {
         const result = await registerUser(email, password);
         if (result.success) {
             toast({
-                title: 'Pendaftaran Berhasil!',
-                description: 'Anda sekarang dapat login dengan akun Anda.',
+                title: 'Registration Successful!',
+                description: 'You can now log in with your new account.',
             });
             router.push('/login');
         } else {
-            setError(result.message || 'Terjadi kesalahan yang tidak diketahui.');
+            setError(result.message || 'An unknown error occurred.');
         }
     } catch (err) {
         if (err instanceof Error) {
             setError(err.message);
         } else {
-            setError('Terjadi kesalahan yang tidak terduga saat mendaftar.');
+            setError('An unexpected error occurred during registration.');
         }
     } finally {
         setIsLoading(false);
@@ -65,9 +65,9 @@ export default function RegisterPage() {
        <div className="w-full max-w-sm p-4">
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Daftar Akun Baru</CardTitle>
+            <CardTitle className="text-2xl">Create an Account</CardTitle>
             <CardDescription>
-              Buat akun baru untuk mulai melacak keuangan Anda.
+              Create a new account to start tracking your finances.
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
@@ -104,7 +104,7 @@ export default function RegisterPage() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="confirm-password">Konfirmasi Password</Label>
+                <Label htmlFor="confirm-password">Confirm Password</Label>
                 <Input
                   id="confirm-password"
                   type="password"
@@ -119,10 +119,10 @@ export default function RegisterPage() {
             <CardFooter className="flex flex-col gap-4">
               <Button className="w-full" type="submit" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Daftar
+                Register
               </Button>
                <div className="text-center text-sm">
-                Sudah punya akun?{' '}
+                Already have an account?{' '}
                 <NextLink href="/login" className="underline">
                   Login
                 </NextLink>

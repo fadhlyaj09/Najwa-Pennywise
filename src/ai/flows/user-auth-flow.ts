@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview User authentication flow using Google Sheets as a database.
@@ -40,15 +41,15 @@ export const registerNewUser = ai.defineFlow(
         try {
             const existingUser = await findUserByEmailInSheet(userData.email);
             if (existingUser) {
-                return { success: false, message: 'Email sudah terdaftar.' };
+                return { success: false, message: 'Email is already registered.' };
             }
             await appendUserToSheet(userData);
-            return { success: true, message: 'Pendaftaran berhasil!' };
+            return { success: true, message: 'Registration successful!' };
         } catch (error) {
             if (error instanceof Error) {
                 return { success: false, message: error.message };
             }
-            return { success: false, message: 'Terjadi kesalahan tidak diketahui saat mendaftar.'}
+            return { success: false, message: 'An unknown error occurred during registration.'}
         }
     }
 );

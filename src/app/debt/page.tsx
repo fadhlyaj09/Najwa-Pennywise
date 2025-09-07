@@ -15,6 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import { format, parseISO } from "date-fns";
 import DebtForm from "@/components/pennywise/DebtForm";
 import { useToast } from "@/hooks/use-toast";
+import { formatRupiah } from "@/lib/utils";
+
 
 export default function DebtPage() {
   const { logout, isAuthenticated, isLoading, userEmail } = useAuth();
@@ -71,10 +73,6 @@ export default function DebtPage() {
     return { unpaidDebts: unpaid, paidDebts: paid, totalUnpaid: total };
   }, [debts]);
   
-  const formatRupiah = (amount: number) => {
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
-  }
-
   if (isLoading || !isAuthenticated) {
      return (
       <div className="flex items-center justify-center min-h-screen">
@@ -93,20 +91,20 @@ export default function DebtPage() {
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
             </NextLink>
-            <h1 className="text-xl font-bold tracking-tight text-foreground">Buku Kas - Utang</h1>
+            <h1 className="text-xl font-bold tracking-tight text-foreground">Debt Ledger</h1>
           </div>
           <div className="flex items-center gap-2">
             <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
                 <DialogTrigger asChild>
                     <Button>
                     <PlusCircle className="mr-2 h-5 w-5" />
-                    Tambah Utang
+                    Add Debt
                     </Button>
                 </DialogTrigger>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Tambah Catatan Utang Baru</DialogTitle>
-                        <DialogDescription>Catat siapa yang berutang kepada Anda.</DialogDescription>
+                        <DialogTitle>Add New Debt Record</DialogTitle>
+                        <DialogDescription>Keep track of who owes you money.</DialogDescription>
                     </DialogHeader>
                     <DebtForm onAddDebt={addDebt} />
                 </DialogContent>
@@ -122,8 +120,8 @@ export default function DebtPage() {
       <main className="flex-1 container py-6">
         <Card className="mb-6">
             <CardHeader>
-                <CardTitle>Total Utang Belum Dibayar</CardTitle>
-                <CardDescription>Jumlah total uang yang dipinjamkan dan belum kembali.</CardDescription>
+                <CardTitle>Total Unpaid Debt</CardTitle>
+                <CardDescription>The total amount of money that has been lent out and not yet returned.</CardDescription>
             </CardHeader>
             <CardContent>
                 <p className="text-3xl font-bold text-destructive">{formatRupiah(totalUnpaid)}</p>
@@ -132,8 +130,8 @@ export default function DebtPage() {
 
         <Tabs defaultValue="unpaid">
             <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="unpaid">Belum Lunas ({unpaidDebts.length})</TabsTrigger>
-                <TabsTrigger value="paid">Sudah Lunas ({paidDebts.length})</TabsTrigger>
+                <TabsTrigger value="unpaid">Unpaid ({unpaidDebts.length})</TabsTrigger>
+                <TabsTrigger value="paid">Paid ({paidDebts.length})</TabsTrigger>
             </TabsList>
             <TabsContent value="unpaid">
                 <Card>
@@ -141,7 +139,7 @@ export default function DebtPage() {
                        <ScrollArea className="h-[60vh]">
                             <div className="p-6 space-y-4">
                             {unpaidDebts.length === 0 ? (
-                                <p className="text-center text-muted-foreground py-10">Tidak ada utang yang belum lunas.</p>
+                                <p className="text-center text-muted-foreground py-10">No unpaid debts.</p>
                             ) : (
                                 unpaidDebts.map(debt => (
                                     <div key={debt.id} className="p-4 border rounded-lg flex justify-between items-start">
@@ -149,9 +147,9 @@ export default function DebtPage() {
                                             <p className="font-semibold">{debt.debtorName}</p>
                                             <p className="text-xl font-bold">{formatRupiah(debt.amount)}</p>
                                             <p className="text-sm text-muted-foreground">{debt.description}</p>
-                                            <p className="text-xs text-muted-foreground mt-1">Jatuh tempo: {format(parseISO(debt.dueDate), "d MMMM yyyy")}</p>
+                                            <p className="text-xs text-muted-foreground mt-1">Due date: {format(parseISO(debt.dueDate), "d MMMM yyyy")}</p>
                                         </div>
-                                        <Button size="sm" onClick={() => markAsPaid(debt.id)}>Tandai Lunas</Button>
+                                        <Button size="sm" onClick={() => markAsPaid(debt.id)}>Mark as Paid</Button>
                                     </div>
                                 ))
                             )}
@@ -166,7 +164,7 @@ export default function DebtPage() {
                        <ScrollArea className="h-[60vh]">
                             <div className="p-6 space-y-4">
                             {paidDebts.length === 0 ? (
-                                <p className="text-center text-muted-foreground py-10">Tidak ada utang yang sudah lunas.</p>
+                                <p className="text-center text-muted-foreground py-10">No paid debts.</p>
                             ) : (
                                 paidDebts.map(debt => (
                                     <div key={debt.id} className="p-4 border rounded-lg flex justify-between items-center opacity-60">
@@ -175,7 +173,7 @@ export default function DebtPage() {
                                             <p className="text-xl font-bold">{formatRupiah(debt.amount)}</p>
                                             <p className="text-sm text-muted-foreground">{debt.description}</p>
                                         </div>
-                                        <Badge variant="secondary">Lunas</Badge>
+                                        <Badge variant="secondary">Paid</Badge>
                                     </div>
                                 ))
                             )}

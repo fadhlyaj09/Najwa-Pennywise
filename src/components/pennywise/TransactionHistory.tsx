@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Transaction, Category } from "@/lib/types";
 import { format, parseISO } from "date-fns";
 import { type LucideIcon, ShoppingCart, Car, Landmark, Utensils, Coffee, UtensilsCrossed, Cookie, ShoppingBag, Users, Wifi, Tag } from 'lucide-react';
+import { formatRupiah } from '@/lib/utils';
 
 // A fallback map for icons
 const iconMap: { [key: string]: LucideIcon } = {
@@ -43,10 +44,6 @@ const TransactionHistory = ({ transactions, categories }: TransactionHistoryProp
   , [transactions]);
 
   const sortedDates = Object.keys(groupedTransactions).sort((a,b) => new Date(b).getTime() - new Date(a).getTime());
-
-  const formatRupiah = (amount: number) => {
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
-  }
   
   return (
     <Card className="h-full">

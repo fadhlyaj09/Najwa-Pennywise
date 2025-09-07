@@ -30,18 +30,18 @@ const fixedCategoriesData: Omit<Category, 'id'>[] = [
 ];
 
 const successMessages = [
-    "Transaksi berhasil, cantik! Hebat banget ngatur keuangannya!",
-    "Tercatat! Kamu memang paling bisa diandalkan, cantik.",
-    "Luar biasa, cantik! Satu langkah lagi menuju tujuan finansialmu.",
-    "Mantap, cantik! Pengeluaran terkontrol, masa depan cerah.",
-    "Dicatat, cantik! Setiap rupiah berharga, dan kamu memahaminya.",
-    "Keren, cantik! Terus disiplin seperti ini ya.",
-    "Catatanmu keren, secantik orangnya!",
-    "Sempurna! Kamu jago banget, cantik!",
-    "Wow, cantik! Keuanganmu makin teratur saja.",
-    "Gadis pintar sepertimu memang jago mengelola uang!",
-    "Kamu hebat, cantik! Terus semangat menabungnya ya.",
-    "Cantik dan cerdas secara finansial, paket komplit!",
+    "Transaction recorded, gorgeous! You're amazing at managing finances!",
+    "Noted! You're the most reliable, beautiful.",
+    "Excellent, gorgeous! One step closer to your financial goals.",
+    "Well done, beautiful! Controlled expenses, bright future.",
+    "Logged, gorgeous! Every penny counts, and you get it.",
+    "Awesome, beautiful! Keep up the discipline.",
+    "Your record is as beautiful as you are!",
+    "Perfect! You're a pro at this, gorgeous!",
+    "Wow, beautiful! Your finances are getting more organized.",
+    "A smart girl like you is a master at managing money!",
+    "You're amazing, beautiful! Keep up the great saving habit.",
+    "Beautiful and financially smart, the complete package!",
 ];
 
 export default function Dashboard() {
@@ -95,17 +95,16 @@ export default function Dashboard() {
   useEffect(() => {
     if (isLoaded && transactionsKey && categoriesKey && limitKey) {
         localStorage.setItem(transactionsKey, JSON.stringify(transactions));
-        localStorage.setItem(categoriesKey, JSON.stringify(categories));
+        localStorage.setItem(categoriesKey, JSON.stringify(categories.filter(c => !c.isFixed)));
         localStorage.setItem(limitKey, JSON.stringify(spendingLimit));
     }
   }, [transactions, categories, spendingLimit, isLoaded, transactionsKey, categoriesKey, limitKey]);
 
 
   const addTransaction = (transaction: Omit<Transaction, "id">) => {
-    // Auto-create category if it doesn't exist
     const categoryExists = categories.some(c => c.name.toLowerCase() === transaction.category.toLowerCase() && c.type === transaction.type);
     if (!categoryExists) {
-        addCategory({ name: transaction.category, icon: 'Tag', type: transaction.type, isFixed: false });
+        addCategory({ name: transaction.category, type: transaction.type });
     }
     const newTransaction = { ...transaction, id: crypto.randomUUID() };
     setTransactions(prev => [newTransaction, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
@@ -118,7 +117,7 @@ export default function Dashboard() {
     });
   };
   
-  const addCategory = (category: Omit<Category, "id" | 'isFixed'>) => {
+  const addCategory = (category: Omit<Category, "id" | 'isFixed' | 'icon'>) => {
     setCategories(prev => {
         const existingCategory = prev.find(c => c.name.toLowerCase() === category.name.toLowerCase() && c.type === category.type);
         if (existingCategory) {
@@ -129,7 +128,7 @@ export default function Dashboard() {
            });
            return prev; 
         }
-        const newCategory: Category = { ...category, id: crypto.randomUUID(), isFixed: false };
+        const newCategory: Category = { ...category, id: crypto.randomUUID(), icon: 'Tag', isFixed: false };
         return [...prev, newCategory];
     });
   };
@@ -280,9 +279,9 @@ export default function Dashboard() {
         </div>
       </header>
       
-      <main className="flex-1 w-full max-w-5xl mx-auto p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="col-span-1 md:col-span-2">
+      <main className="flex-1 w-full max-w-5xl mx-auto p-4 md:p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-3">
                 <SummaryCards 
                 income={income}
                 expenses={expenses}
@@ -291,10 +290,10 @@ export default function Dashboard() {
                 onSetSpendingLimit={setSpendingLimit}
                 />
             </div>
-          <div className="col-span-1 md:col-span-1 flex flex-col gap-6">
+          <div className="col-span-1 md:col-span-1 lg:col-span-2 flex flex-col gap-6">
             <TransactionHistory transactions={transactions} categories={categories} />
           </div>
-          <div className="col-span-1 md:col-span-1 flex flex-col gap-6">
+          <div className="col-span-1 md:col-span-1 lg:col-span-1 flex flex-col gap-6">
             <WeeklyChart transactions={transactions} />
             <AiReport transactions={transactions} spendingLimit={spendingLimit} income={income} expenses={expenses} />
           </div>

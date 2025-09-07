@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, FormEvent, useEffect } from 'react';
@@ -36,7 +37,7 @@ export default function LoginPage() {
     if (result.success) {
       router.push('/');
     } else {
-      setError(result.message || 'Email atau kata sandi salah. Silakan coba lagi.');
+      setError(result.message || 'Invalid email or password. Please try again.');
     }
   };
 
@@ -47,7 +48,7 @@ export default function LoginPage() {
           <CardHeader>
             <CardTitle className="text-2xl">Login</CardTitle>
             <CardDescription>
-              Masukkan email Anda di bawah ini untuk masuk ke akun Anda.
+              Enter your email below to login to your account.
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
@@ -87,12 +88,12 @@ export default function LoginPage() {
             <CardFooter className="flex flex-col gap-4">
               <Button className="w-full" type="submit" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Masuk
+                Login
               </Button>
               <div className="text-center text-sm">
-                Belum punya akun?{' '}
+                Don't have an account?{' '}
                 <NextLink href="/register" className="underline">
-                  Daftar
+                  Sign up
                 </NextLink>
               </div>
             </CardFooter>

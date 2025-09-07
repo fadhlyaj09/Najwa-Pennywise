@@ -1,3 +1,4 @@
+
 'use server';
 // This is a mock authentication service.
 // In a real application, this would be handled by a backend service.
@@ -12,13 +13,13 @@ export async function authenticate(email: string, pass: string): Promise<{succes
     if (user && user.password === pass) {
       return { success: true };
     }
-    return { success: false, message: "Email atau kata sandi salah." };
+    return { success: false, message: "Incorrect email or password." };
   } catch (error) {
     console.error("Error during authentication:", error);
     if (error instanceof Error) {
         return { success: false, message: error.message };
     }
-    return { success: false, message: 'Terjadi kesalahan pada server. Gagal terhubung ke Google Sheet.' };
+    return { success: false, message: 'Server error. Failed to connect to Google Sheet.' };
   }
 }
 
@@ -33,6 +34,6 @@ export async function registerUser(email: string, pass: string): Promise<{succes
         if (error instanceof Error) {
             return { success: false, message: error.message };
         }
-        return { success: false, message: 'Terjadi kesalahan saat mendaftar. Silakan coba lagi.' };
+        return { success: false, message: 'An error occurred during registration. Please try again.' };
     }
 }
