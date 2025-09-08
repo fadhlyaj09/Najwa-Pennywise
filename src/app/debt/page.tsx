@@ -69,15 +69,13 @@ export default function DebtPage() {
   }, [userEmail, isAuthenticated, isAuthLoading, toast]);
 
 
-HEAD
-  const addDebt = async (debtData: Omit<Debt, 'id' | 'status' | 'lendingTransactionId' | 'repaymentTransactionId'>) => {
-
-  const addDebt = async (debtData: Omit<Debt, 'id' | 'status' | 'icon'>) => {
-
+  const addDebt = async (debtData: Omit<Debt, 'id' | 'status' | 'lendingTransactionId' | 'repaymentTransactionId' | 'icon'>) => {
     if (!userEmail) return;
 
+    const newDebtData = { ...debtData, icon: 'Users' };
+
     setIsSyncing(true);
-    const result = await addDebtAction(userEmail, debtData);
+    const result = await addDebtAction(userEmail, newDebtData);
     setIsSyncing(false);
 
     if (result.success && result.newDebt) {
@@ -328,5 +326,3 @@ HEAD
     </div>
   );
 }
-
-    

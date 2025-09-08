@@ -4,11 +4,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import NextLink from 'next/link';
 import { useRouter } from "next/navigation";
-HEAD
 import { PlusCircle, Tags, LogOut, BookUser, MoreVertical, Loader2, Cloud, CloudOff, Repeat } from "lucide-react";
-
-import { PlusCircle, Tags, LogOut, BookUser, MoreVertical, Loader2, Cloud, CloudOff } from "lucide-react";
-
 import type { Transaction, Category, Debt } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import SummaryCards from "@/components/pennywise/SummaryCards";
@@ -22,11 +18,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { useAuth } from "@/hooks/use-auth";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-HEAD
-import { getUserData, saveUserData, deleteTransactionAction } from "@/lib/actions";
-import { useDebouncedCallback } from "use-debounce";
-
-
 import {
     getUserData,
     addTransactionAction,
@@ -50,8 +41,8 @@ const fixedCategoriesData: Omit<Category, 'id'>[] = [
 ];
 
 const najwaCompliments = [
-    "Asiiik, transaksi masuk! Najwa cantik emang paling jago ngatur duit.",
-    "Cakep! Duitnya langsung kecatet. Emang a-class banget Najwa cantik.",
+    "Asiiik, transaksi masuk! janagn boros-boros yah cantiik.",
+    "Cakep! Duitnya langsung kecatet. Keren banget cantiknya akuu.",
     "Gokil! Keuanganmu makin kece, Najwa cantik. Lanjutkan!",
     "Mantap jiwa, Najwa cantik! Duit aman, hati senang.",
     "Wih, gercep banget! Najwa cantik emang paling top soal cuan.",
@@ -63,7 +54,6 @@ export default function Dashboard() {
   const router = useRouter();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [debts, setDebts] = useState<Debt[]>([]);
   const [spendingLimit, setSpendingLimit] = useState<number>(5000000);
   const [debts, setDebts] = useState<Debt[]>([]);
 
@@ -72,24 +62,6 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null);
 
   const { toast } = useToast();
-
-HEAD
-  const debouncedSave = useDebouncedCallback(async (email: string, trans: Transaction[], cats: Category[], limit: number, debtList: Debt[]) => {
-    setIsSyncing(true);
-    const result = await saveUserData(email, trans, cats, limit, debtList);
-    if (!result.success) {
-      toast({
-        variant: "destructive",
-        title: "Sync Error",
-        description: result.error || "Could not save data to the cloud."
-      });
-      setError(result.error || "Sync failed");
-    }
-    setIsSyncing(false);
-  }, 2000);
-
-
-
 
   useEffect(() => {
     if (!userEmail) {
@@ -109,7 +81,6 @@ HEAD
             setDebts(result.data.debts || []);
             
             const userCategories = result.data.categories || [];
-HEAD
             
             const existingCategoryNames = new Set(userCategories.map(c => `${c.name.toLowerCase()}|${c.type}`));
             const missingFixedCategories = fixedCategoriesData.filter(
@@ -118,19 +89,6 @@ HEAD
       
             const finalCategories = [...userCategories, ...missingFixedCategories.map(c => ({...c, id: crypto.randomUUID()}))];
             setCategories(finalCategories);
-
-            const newCategories = [...userCategories];
-            
-            fixedCategoriesData.forEach(fixedCat => {
-                if (!userCategories.some(userCat => userCat.name === fixedCat.name && userCat.type === fixedCat.type)) {
-                    const newCategoryToAdd: Category = { ...fixedCat, id: crypto.randomUUID() };
-                    newCategories.push(newCategoryToAdd);
-                    // Also add it to the sheet for consistency
-                    addCategoryAction(userEmail, newCategoryToAdd);
-                }
-            });
-            setCategories(newCategories);
-
 
         } else {
             setError(result.error || 'Failed to load data.');
@@ -148,50 +106,7 @@ HEAD
   const addTransaction = async (transactionData: Omit<Transaction, "id">) => {
     if (!userEmail) return;
 
-HEAD
-HEAD
- const saveData = useCallback((
-    newTransactions: Transaction[] | ((prev: Transaction[]) => Transaction[]),
-    newCategories: Category[] | ((prev: Category[]) => Category[]),
-    newLimit: number | ((prev: number) => number),
-    newDebts: Debt[] | ((prev: Debt[]) => Debt[])
-  ) => {
-      if (!userEmail) return;
-      
-      let finalTransactions: Transaction[] = [];
-      let finalCategories: Category[] = [];
-      let finalLimit: number = 0;
-      let finalDebts: Debt[] = [];
-
-      setTransactions(prev => {
-          finalTransactions = typeof newTransactions === 'function' ? newTransactions(prev) : newTransactions;
-          return finalTransactions;
-      });
-      setCategories(prev => {
-          finalCategories = typeof newCategories === 'function' ? newCategories(prev) : newCategories;
-          return finalCategories;
-      });
-      setSpendingLimit(prev => {
-          finalLimit = typeof newLimit === 'function' ? newLimit(prev) : newLimit;
-          return finalLimit;
-      });
-      setDebts(prev => {
-          finalDebts = typeof newDebts === 'function' ? newDebts(prev) : newDebts;
-          return finalDebts;
-      });
-
-      debouncedSave(userEmail, finalTransactions, finalCategories, finalLimit, finalDebts);
-  }, [userEmail, debouncedSave]);
-  
-
-  const addTransaction = (transaction: Omit<Transaction, "id">) => {
-    const categoryExists = categories.some(c => c.name.toLowerCase() === transaction.category.toLowerCase() && c.type === transaction.type);
-    
-    let updatedCategories = categories;
-
-
     setIsSyncing(true);
-dc8a151 (error saat hapus Debt Repayment)
     const categoryExists = categories.some(c => c.name.toLowerCase() === transactionData.category.toLowerCase() && c.type === transactionData.type);
 
     if (!categoryExists) {
@@ -200,43 +115,6 @@ dc8a151 (error saat hapus Debt Repayment)
             setCategories(prev => [...prev, catResult.category!]);
         }
     }
-
-HEAD
-    const newTransaction = { ...transaction, id: crypto.randomUUID() };
-    const updatedTransactions = [newTransaction, ...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    
-    saveData(updatedTransactions, updatedCategories, spendingLimit, debts);
-    setTransactionFormOpen(false);
-    
-    const randomMessage = najwaCompliments[Math.floor(Math.random() * najwaCompliments.length)];
-    toast({
-      title: "Success!",
-      description: randomMessage,
-    });
-  };
-
-  const deleteTransaction = async (transactionId: string) => {
-      if (!userEmail) return;
-
-      setIsSyncing(true);
-      const result = await deleteTransactionAction(userEmail, transactionId);
-      setIsSyncing(false);
-
-      if (result.success) {
-          setTransactions(result.transactions || []);
-          setDebts(result.debts || []);
-          toast({
-              title: "Transaction Deleted",
-              description: "The transaction and any linked debt record have been updated."
-          });
-      } else {
-          toast({
-              variant: "destructive",
-              title: "Error",
-              description: result.error || "Could not delete the transaction."
-          });
-      }
-
     const result = await addTransactionAction(userEmail, transactionData);
     setIsSyncing(false);
     if (result.success && result.transaction) {
@@ -274,7 +152,6 @@ HEAD
     } else {
         toast({ variant: 'destructive', title: 'Error', description: result.error });
     }
-
   };
 
   const addCategory = async (categoryData: Omit<Category, "id" | 'isFixed' | 'icon'>) => {
@@ -287,11 +164,6 @@ HEAD
         setIsSyncing(false);
         return; 
     }
-HEAD
-    const newCategory: Category = { ...category, id: crypto.randomUUID(), icon: 'Tag', isFixed: false };
-    const updatedCategories = [...categories, newCategory];
-    saveData(transactions, updatedCategories, spendingLimit, debts);
-
     const result = await addCategoryAction(userEmail, categoryData);
     setIsSyncing(false);
     if (result.success && result.category) {
@@ -300,7 +172,6 @@ HEAD
     } else {
         toast({ variant: 'destructive', title: 'Error', description: result.error });
     }
-
   };
 
   const deleteCategory = async (id: string) => {
@@ -317,18 +188,6 @@ HEAD
         toast({ variant: "destructive", title: "Cannot Delete Category", description: `"${categoryToDelete.name}" is in use by one or more transactions.` });
         return;
     }
-HEAD
-    const updatedCategories = categories.filter(c => c.id !== id);
-    saveData(transactions, updatedCategories, spendingLimit, debts);
-    toast({
-      title: 'Success!',
-      description: `Category "${categoryToDelete.name}" has been deleted.`
-    });
-  };
-
-  const handleSetSpendingLimit = (newLimit: number) => {
-    saveData(transactions, categories, newLimit, debts);
-
     
     setIsSyncing(true);
     const result = await deleteCategoryAction(id);
@@ -351,7 +210,6 @@ HEAD
     } else {
         toast({ variant: 'destructive', title: 'Error', description: result.error });
     }
-
   };
 
   const { income, expenses, balance } = useMemo(() => {
@@ -504,8 +362,5 @@ HEAD
     </div>
   );
 }
-HEAD
-
 
     
-
