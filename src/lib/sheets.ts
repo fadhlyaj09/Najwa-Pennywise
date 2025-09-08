@@ -8,9 +8,14 @@ import type { Transaction, Category, Debt } from '@/lib/types';
 // you must configure these variables in the project's settings.
 const SHEET_ID = process.env.SHEET_ID;
 const GOOGLE_SHEETS_CLIENT_EMAIL = process.env.GOOGLE_SHEETS_CLIENT_EMAIL;
-// This line below is the fix. It replaces the literal '\\n' characters from the
-// Vercel environment variable with actual newline characters '\n'.
-const GOOGLE_SHEETS_PRIVATE_KEY = process.env.GOOGLE_SHEETS_PRIVATE_KEY?.replace(/\\n/g, '\n');
+
+// This logic robustly handles the private key from environment variables.
+// 1. It replaces literal '\\n' with actual newline characters.
+// 2. It removes potential surrounding quotes that some platforms might add.
+const GOOGLE_SHEETS_PRIVATE_KEY = (process.env.GOOGLE_SHEETS_PRIVATE_KEY || '')
+    .replace(/\\n/g, '\n')
+    .replace(/^"|"$/g, '');
+
 
 const USER_SHEET_NAME = 'Users';
 const TRANSACTION_SHEET_NAME = 'Transactions';
