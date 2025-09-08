@@ -14,7 +14,7 @@ import {z} from 'genkit';
 const GenerateMonthlyReportInputSchema = z.object({
   income: z.number().describe('Total income for the month.'),
   expenses: z.number().describe('Total expenses for the month.'),
-  spendingByCategory: z.record(z.string(), z.number()).describe('A JSON string representing spending categorized by type with amount. Example: {"Food": 500000, "Transport": 200000}'),
+  spendingByCategory: z.record(z.string(), z.number()).describe('An object mapping spending categories to their total amounts. Example: {"Food": 500000, "Transport": 200000}'),
   spendingLimit: z.number().describe('Monthly spending limit set by the user.'),
   transactionHistory: z.string().describe('A detailed transaction history for the month, with each transaction on a new line.'),
 });
@@ -38,7 +38,7 @@ const generateMonthlyReportPrompt = ai.definePrompt({
 Data:
 - Income: {{{income}}}
 - Expenses: {{{expenses}}}
-- Spending by Category: {{{spendingByCategory}}}
+- Spending by Category: {{jsonStringify spendingByCategory}}
 - Spending Limit: {{{spendingLimit}}}
 - Transaction History:
 {{{transactionHistory}}}
@@ -56,7 +56,7 @@ Structure your HTML report as follows:
 
 Formatting Rules:
 - Use HTML tags like <h4> for section titles, <p> for paragraphs, <ul> and <li> for lists, and <strong> or <b> for emphasis.
-- Format all currency values using 'Rp' prefix and standard Indonesian number formatting (e.g., Rp 1.500.000).
+- Format all currency values using 'Rp' prefix and standard Indonesian number formatting (e.g., Rp 1.500.000). Do not use '.00' for cents.
 - Keep the tone encouraging, not judgmental.
 `,
 });
@@ -68,10 +68,7 @@ const generateMonthlyReportFlow = ai.defineFlow(
     outputSchema: GenerateMonthlyReportOutputSchema,
   },
   async input => {
-    const {output} = await generateMonthlyReportPrompt({
-        ...input,
-        // The prompt expects the raw object, it will be stringified by the template.
-    });
+    const {output} = await generateMonthlyReportPrompt(input);
     return output!;
   }
 );

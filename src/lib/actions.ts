@@ -34,7 +34,7 @@ export async function generateMonthlyReportAction(
     const promptInput = {
         income,
         expenses,
-        spendingByCategory: JSON.stringify(spendingByCategory),
+        spendingByCategory,
         spendingLimit,
         transactionHistory: transactionHistoryString,
     };
@@ -225,14 +225,17 @@ export async function deleteTransactionAction(
 
 export async function deleteDebtAction(debtToDelete: Debt): Promise<{ success: boolean, error?: string }> {
     try {
+        // Always delete the initial lending transaction
         if (debtToDelete.lendingTransactionId) {
             await deleteTransactionFromSheet(debtToDelete.lendingTransactionId);
         }
         
+        // If the debt was paid, delete the repayment transaction as well
         if (debtToDelete.status === 'paid' && debtToDelete.repaymentTransactionId) {
             await deleteTransactionFromSheet(debtToDelete.repaymentTransactionId);
         }
 
+        // Finally, delete the debt record itself
         await deleteDebtFromSheet(debtToDelete.id);
         return { success: true };
     } catch (error) {
