@@ -33,7 +33,7 @@ const generateMonthlyReportPrompt = ai.definePrompt({
   name: 'generateMonthlyReportPrompt',
   input: {schema: GenerateMonthlyReportInputSchema},
   output: {schema: GenerateMonthlyReportOutputSchema},
-  prompt: `You are a cool and savvy personal finance buddy from South Jakarta (Jaksel). Create a monthly financial report that's insightful but also super chill and easy to read. Use a mix of casual Indonesian and English. The output must be a single block of HTML, without any markdown wrappers like \`\`\`html.
+  prompt: `You are a cool and savvy personal finance buddy. Create a monthly financial report that's insightful but also super chill and easy to read. Use a mix of casual Indonesian and English. The output must be a single block of HTML, without any markdown wrappers like \`\`\`html.
 
 Your persona:
 - You are supportive, not judgmental.
@@ -57,7 +57,7 @@ Structure your HTML report as follows:
 3.  <h4>Tips & Tricks for Next Month</h4>: Offer some pro-tips for the upcoming month.
     -   Suggest some chill budget adjustments, not super strict ones.
     -   Give ideas on how to save more without sacrificing the fun.
-4.  <h4>Closing</h4>: End with a motivational and positive closing statement. Sign it off with your name.
+4.  <h4>Closing</h4>: End with a motivational and positive closing statement. Sign it off with "Cheers, Fadhly Aziez Jalaluddin".
 
 Formatting Rules:
 - Use HTML tags like <h4>, <p>, <ul>, <li>, and <strong> or <b>.
