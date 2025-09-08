@@ -3,6 +3,9 @@ import { google } from 'googleapis';
 import type { User } from '@/ai/flows/user-auth-flow';
 import type { Transaction, Category, Debt } from '@/lib/types';
 
+// IMPORTANT: These environment variables must be set for the application to work.
+// When deploying to a hosting provider (e.g., Vercel, Firebase App Hosting),
+// you must configure these variables in the project's settings.
 const SHEET_ID = process.env.SHEET_ID;
 const GOOGLE_SHEETS_CLIENT_EMAIL = process.env.GOOGLE_SHEETS_CLIENT_EMAIL;
 const GOOGLE_SHEETS_PRIVATE_KEY = process.env.GOOGLE_SHEETS_PRIVATE_KEY?.replace(/\\n/g, '\n');

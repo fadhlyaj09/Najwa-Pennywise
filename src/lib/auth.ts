@@ -17,9 +17,11 @@ export async function authenticate(email: string, pass: string): Promise<{succes
   } catch (error) {
     console.error("Error during authentication:", error);
     if (error instanceof Error) {
+        // Return the specific error message, which is helpful for deployment issues.
         return { success: false, message: error.message };
     }
-    return { success: false, message: 'Server error. Failed to connect to Google Sheet.' };
+    // This fallback is less likely to be hit now.
+    return { success: false, message: 'An unknown server error occurred.' };
   }
 }
 
