@@ -38,7 +38,7 @@ const generateMonthlyReportPrompt = ai.definePrompt({
 Data:
 - Income: {{{income}}}
 - Expenses: {{{expenses}}}
-- Spending by Category: {{jsonStringify spendingByCategory}}
+- Spending by Category: {{spendingByCategory}}
 - Spending Limit: {{{spendingLimit}}}
 - Transaction History:
 {{{transactionHistory}}}
