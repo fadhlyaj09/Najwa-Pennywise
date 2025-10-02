@@ -40,13 +40,12 @@ const fixedCategoriesData: Omit<Category, 'id'>[] = [
     { name: 'Monthly Shopping', icon: 'ShoppingBag', type: 'expense', isFixed: true },
 ];
 
-const najwaCompliments = [
-    "Asiiik, transaksi masuk! janagn boros-boros yah cantiik.",
-    "Cakep! Duitnya langsung kecatet. Keren banget cantiknya akuu.",
-    "Gokil! Keuanganmu makin kece, Najwa cantik. Lanjutkan!",
-    "Mantap jiwa, Najwa cantik! Duit aman, hati senang.",
-    "Wih, gercep banget! Najwa cantik emang paling top soal cuan.",
-    "Keren abis, Najwa cantik! Financial goals makin deket nih.",
+const successMessages = [
+    "Transaction recorded successfully!",
+    "Great! Your transaction has been added.",
+    "Done! The transaction is now in your records.",
+    "Transaction successfully saved.",
+    "Got it! Your finances are up to date."
 ];
 
 export default function Dashboard() {
@@ -76,8 +75,10 @@ export default function Dashboard() {
         const result = await getUserData(userEmail);
         
         if (result.success && result.data) {
-            setTransactions(result.data.transactions || []);
-            setSpendingLimit(result.data.spendingLimit || 5000000);
+            const userTransactions = result.data.transactions || [];
+            setTransactions(userTransactions.map(t => ({...t, amount: Number(t.amount) || 0})));
+
+            setSpendingLimit(Number(result.data.spendingLimit) || 5000000);
             setDebts(result.data.debts || []);
             
             const userCategories = result.data.categories || [];
@@ -120,7 +121,7 @@ export default function Dashboard() {
     if (result.success && result.transaction) {
         setTransactions(prev => [result.transaction!, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
         setTransactionFormOpen(false);
-        const randomMessage = najwaCompliments[Math.floor(Math.random() * najwaCompliments.length)];
+        const randomMessage = successMessages[Math.floor(Math.random() * successMessages.length)];
         toast({
           title: "Success!",
           description: randomMessage,
@@ -244,7 +245,7 @@ export default function Dashboard() {
         <div className="w-full max-w-5xl mx-auto flex h-16 items-center justify-between px-4">
           <NextLink href="/" passHref>
             <h1 className="text-xl md:text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent text-transparent bg-clip-text cursor-pointer">
-              Najwa Pennywise
+              Pennywise
             </h1>
           </NextLink>
           <div className="flex items-center gap-2">
@@ -363,4 +364,4 @@ export default function Dashboard() {
   );
 }
 
-    
+      
